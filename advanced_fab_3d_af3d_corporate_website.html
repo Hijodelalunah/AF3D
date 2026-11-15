@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="fr" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Advanced Fab 3D (AF3D) | L'Expertise en Fabrication Additive</title>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            afNavy: '#0B132B',
+            afSlate: '#1C2541',
+            afCyan: '#0EA5E9',
+            afCyanDark: '#0284C7',
+            afLight: '#F8FAFC',
+          },
+          backgroundImage: {
+            'tech-grid': "linear-gradient(to right, rgba(14, 165, 233, 0.07) 1px, transparent 1px), linear-gradient(to bottom, rgba(14, 165, 233, 0.07) 1px, transparent 1px)",
+            'light-grid': "linear-gradient(to right, rgba(15, 23, 42, 0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(15, 23, 42, 0.04) 1px, transparent 1px)",
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Subtle Animations for 3D Extruder & Layering */
+    @keyframes nozzleMove {
+      0%, 100% { transform: translateX(-38px); }
+      50% { transform: translateX(38px); }
+    }
+    @keyframes glowPulse {
+      0%, 100% { opacity: 0.55; transform: scale(0.95); }
+      50% { opacity: 1; transform: scale(1.1); }
+    }
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
+    }
+    .animate-nozzle {
+      animation: nozzleMove 4.2s ease-in-out infinite;
+    }
+    .animate-glow {
+      animation: glowPulse 2.1s ease-in-out infinite;
+    }
+    .animate-float {
+      animation: floatSlow 5s ease-in-out infinite;
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0B132B;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1C2541;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #0EA5E9;
+    }
+  </style>
+</head>
+<body class="bg-white text-slate-900 font-sans antialiased selection:bg-afCyan selection:text-white">
+
+  <!-- ==================== STICKY NAVIGATION HEADER ==================== -->
+  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80 transition-all">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20">
+        <!-- AF3D Geometric Logo -->
+        <a href="#" class="flex items-center gap-3 group focus:outline-none">
+          <div class="w-11 h-11 rounded-xl bg-afNavy flex items-center justify-center shadow-md group-hover:bg-afCyanDark transition-colors">
+            <svg class="w-7 h-7 text-afCyan group-hover:text-white transition-colors" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- Isometric 3D Cube + Extruder Layer Lines -->
+              <path d="M18 3L31 10.5V25.5L18 33L5 25.5V10.5L18 3Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+              <path d="M18 18L31 10.5M18 18V33M18 18L5 10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M11.5 14.2L18 10.5L24.5 14.2" stroke="#38BDF8" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="flex flex-col">
+            <div class="flex items-baseline gap-1.5">
+              <span class="font-extrabold text-xl tracking-tight text-afNavy">AF3D</span>
+              <span class="text-[11px] font-mono font-semibold uppercase tracking-widest text-afCyanDark hidden sm:inline">Advanced Fab 3D</span>
+            </div>
+            <span class="text-[10px] uppercase tracking-wider text-slate-500 font-medium" data-i18n="brandTagline">L'expertise en fabrication additive</span>
+          </div>
+        </a>
+
+        <!-- Desktop Navigation Links -->
+        <nav class="hidden lg:flex items-center gap-7 text-sm font-medium text-slate-600">
+          <a href="#about" class="hover:text-afCyanDark transition-colors" data-i18n="navAbout">À propos</a>
+          <a href="#sectors" class="hover:text-afCyanDark transition-colors" data-i18n="navSectors">Secteurs</a>
+          <a href="#services" class="hover:text-afCyanDark transition-colors" data-i18n="navServices">Services</a>
+          <a href="#machines" class="hover:text-afCyanDark transition-colors" data-i18n="navMachines">Parc Machines</a>
+          <a href="#materials" class="hover:text-afCyanDark transition-colors" data-i18n="navMaterials">Matériaux</a>
+          <a href="#method" class="hover:text-afCyanDark transition-colors" data-i18n="navMethod">Méthode</a>
+        </nav>
+
+        <!-- Right Controls: FR/EN Switcher + CTA + Mobile Menu Button -->
+        <div class="flex items-center gap-3">
+          <!-- Language Switcher Pill -->
+          <div class="inline-flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200" role="group" aria-label="Language Switcher">
+            <button id="btn-lang-fr" onclick="setLanguage('fr')" class="px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all bg-afNavy text-white shadow-sm">
+              FR
+            </button>
+            <button id="btn-lang-en" onclick="setLanguage('en')" class="px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all text-slate-600 hover:text-afNavy">
+              EN
+            </button>
+          </div>
+
+          <!-- Primary Header CTA -->
+          <button onclick="openQuoteModal()" class="hidden sm:inline-flex items-center gap-2 bg-afCyanDark hover:bg-afNavy text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-sm transition-all cursor-pointer">
+            <span data-i18n="navQuote">Demander un devis</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+          </button>
+
+          <!-- Mobile Hamburger -->
+          <button id="mobile-menu-btn" onclick="toggleMobileMenu()" class="lg:hidden p-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-100 focus:outline-none" aria-label="Menu">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Navigation Drawer -->
+    <div id="mobile-menu" class="hidden lg:hidden bg-white border-b border-slate-200 px-4 pt-3 pb-6 space-y-2 shadow-lg">
+      <a href="#about" onclick="toggleMobileMenu()" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50" data-i18n="navAbout">À propos</a>
+      <a href="#sectors" onclick="toggleMobileMenu()" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50" data-i18n="navSectors">Secteurs</a>
+      <a href="#services" onclick="toggleMobileMenu()" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50" data-i18n="navServices">Services</a>
+      <a href="#machines" onclick="toggleMobileMenu()" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50" data-i18n="navMachines">Parc Machines</a>
+      <a href="#materials" onclick="toggleMobileMenu()" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50" data-i18n="navMaterials">Matériaux</a>
+      <a href="#method" onclick="toggleMobileMenu()" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50" data-i18n="navMethod">Méthode</a>
+      <div class="pt-2">
+        <button onclick="toggleMobileMenu(); openQuoteModal();" class="w-full flex items-center justify-center gap-2 bg-afCyanDark text-white text-sm font-semibold px-4 py-3 rounded-xl">
+          <span data-i18n="navQuote">Demander un devis</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== 1. HERO SECTION ==================== -->
+  <section class="relative bg-afNavy text-white overflow-hidden bg-tech-grid bg-[size:36px_36px]">
+    <!-- Subtle radial lighting -->
+    <div class="absolute inset-0 bg-gradient-to-br from-afNavy via-afNavy/95 to-afSlate/90 pointer-events-none"></div>
+    <div class="absolute -top-24 -right-24 w-96 h-96 bg-afCyan/20 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 lg:py-28">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        <!-- Left Column: Copy & CTAs -->
+        <div class="lg:col-span-7 space-y-7">
+          <!-- Startup Badge -->
+          <div class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-white/10 border border-afCyan/30 backdrop-blur-sm">
+            <span class="w-2 h-2 rounded-full bg-afCyan animate-ping"></span>
+            <span class="font-mono text-xs font-semibold tracking-wider text-sky-300 uppercase" data-i18n="heroBadge">
+              STARTUP MAROCAINE — GÉNÉRATION NOUVELLE
+            </span>
+          </div>
+
+          <!-- Main Headline -->
+          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.12]" data-i18n="heroTitle">
+            La fabrication additive qui accélère l'industrie
+          </h1>
+
+          <!-- Value Proposition -->
+          <p class="text-lg sm:text-xl text-slate-300 max-w-2xl leading-relaxed font-normal" data-i18n="heroSubtitle">
+            Concevoir. Imprimer. Livrer. Plus vite, plus précis. Nous transformons rapidement vos idées en pièces techniques performantes grâce à des ingénieurs experts et des équipements de dernière génération.
+          </p>
+
+          <!-- Action Buttons -->
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
+            <button onclick="openQuoteModal()" class="inline-flex items-center justify-center gap-2.5 bg-afCyan hover:bg-sky-400 text-afNavy font-bold px-7 py-4 rounded-xl shadow-lg shadow-afCyan/20 transition-all cursor-pointer text-base">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+              <span data-i18n="heroCtaPrimary">Lancer un projet / Devis 3D</span>
+            </button>
+            <a href="#services" class="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 text-white border border-white/20 font-semibold px-7 py-4 rounded-xl transition-all text-base">
+              <span data-i18n="heroCtaSecondary">Explorer nos capacités</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </a>
+          </div>
+
+          <!-- Key Metrics / Telemetry Bar -->
+          <div class="grid grid-cols-3 gap-4 pt-6 border-t border-white/10">
+            <div>
+              <div class="font-mono text-xl sm:text-2xl font-bold text-afCyan">01 → 06</div>
+              <div class="text-xs sm:text-sm text-slate-400 mt-0.5" data-i18n="heroStat1">De l'idée à la pièce finie</div>
+            </div>
+            <div>
+              <div class="font-mono text-xl sm:text-2xl font-bold text-white">100% NDA</div>
+              <div class="text-xs sm:text-sm text-slate-400 mt-0.5" data-i18n="heroStat2">Confidentialité garantie</div>
+            </div>
+            <div>
+              <div class="font-mono text-xl sm:text-2xl font-bold text-afCyan">Maroc</div>
+              <div class="text-xs sm:text-sm text-slate-400 mt-0.5" data-i18n="heroStat3">Production locale agile</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Animated Precision 3D Extruder & Layer Visualization -->
+        <div class="lg:col-span-5">
+          <div class="relative rounded-2xl bg-afSlate/80 border border-afCyan/30 p-6 sm:p-8 shadow-2xl backdrop-blur-md">
+            <!-- Top Telemetry Header -->
+            <div class="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                <span class="font-mono text-xs text-slate-300 uppercase tracking-wider">AF3D // ADDITIVE ENGINE</span>
+              </div>
+              <span class="font-mono text-xs px-2.5 py-1 rounded bg-afCyan/20 text-sky-300 border border-afCyan/30">ISO-TECH</span>
+            </div>
+
+            <!-- Custom SVG Isometric 3D Printer & Layered Part (Inspired by AF3D visual identity) -->
+            <div class="relative flex justify-center items-center py-4">
+              <svg class="w-full max-w-[340px] h-auto" viewBox="0 0 360 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Gantry Rail -->
+                <rect x="24" y="22" width="312" height="10" rx="5" fill="#1E293B" stroke="#38BDF8" stroke-opacity="0.4" stroke-width="1.5"/>
+                
+                <!-- Animated Print Head / Extruder -->
+                <g class="animate-nozzle">
+                  <rect x="156" y="16" width="48" height="44" rx="8" fill="#1E3A8A" stroke="#38BDF8" stroke-width="1.5"/>
+                  <rect x="166" y="25" width="28" height="5" rx="2.5" fill="#38BDF8"/>
+                  <!-- Metallic Nozzle Cone -->
+                  <polygon points="168,60 192,60 184,84 176,84" fill="url(#nozzleGrad)"/>
+                  <rect x="178" y="84" width="4" height="12" fill="#7DD3FC"/>
+                  <!-- Laser / Thermal Melt Glow -->
+                  <ellipse cx="180" cy="98" rx="26" ry="8" fill="#38BDF8" class="animate-glow" opacity="0.65"/>
+                </g>
+
+                <!-- Isometric Build Plate Grid -->
+                <polygon points="180,255 320,282 180,308 40,282" fill="#0F172A" stroke="#38BDF8" stroke-opacity="0.45" stroke-width="1.5"/>
+                <line x1="110" y1="268" x2="250" y2="295" stroke="#38BDF8" stroke-opacity="0.2"/>
+                <line x1="250" y1="268" x2="110" y2="295" stroke="#38BDF8" stroke-opacity="0.2"/>
+                <line x1="180" y1="255" x2="180" y2="308" stroke="#38BDF8" stroke-opacity="0.2"/>
+
+                <!-- Layered 3D Printed Industrial Part (Bottom to Top) -->
+                <g id="printed-layers">
+                  <rect x="75" y="264" width="210" height="8" rx="4" fill="url(#layerGrad1)"/>
+                  <rect x="82" y="255" width="196" height="8" rx="4" fill="url(#layerGrad2)"/>
+                  <rect x="90" y="246" width="180" height="8" rx="4" fill="url(#layerGrad1)"/>
+                  <rect x="100" y="237" width="160" height="8" rx="4" fill="url(#layerGrad2)"/>
+                  <rect x="112" y="228" width="136" height="8" rx="4" fill="url(#layerGrad1)"/>
+                  <rect x="120" y="219" width="120" height="8" rx="4" fill="url(#layerGrad2)"/>
+                  <rect x="126" y="210" width="108" height="8" rx="4" fill="url(#layerGrad1)"/>
+                  <rect x="128" y="201" width="104" height="8" rx="4" fill="url(#layerGrad2)"/>
+                  <rect x="126" y="192" width="108" height="8" rx="4" fill="url(#layerGrad1)"/>
+                  <rect x="120" y="183" width="120" height="8" rx="4" fill="url(#layerGrad2)"/>
+                  <rect x="110" y="174" width="140" height="8" rx="4" fill="url(#layerGrad1)"/>
+                  <rect x="100" y="165" width="160" height="8" rx="4" fill="url(#layerGrad2)"/>
+                  <rect x="92" y="156" width="176" height="8" rx="4" fill="url(#layerGrad1)"/>
+                  <rect x="86" y="147" width="188" height="8" rx="4" fill="url(#layerGrad2)"/>
+                  <rect x="84" y="138" width="192" height="8" rx="4" fill="url(#layerGrad1)"/>
+                  <rect x="86" y="129" width="188" height="8" rx="4" fill="url(#layerGrad2)"/>
+                  <rect x="92" y="120" width="176" height="8" rx="4" fill="url(#layerGrad1)"/>
+                  <rect x="102" y="111" width="156" height="8" rx="4" fill="url(#layerGrad2)"/>
+                  <!-- Active Top Extrusion Bead -->
+                  <rect x="114" y="102" width="76" height="7" rx="3.5" fill="#7DD3FC"/>
+                  <!-- Engineering Cutout Details -->
+                  <circle cx="145" cy="256" r="10" fill="#0B132B" opacity="0.7"/>
+                  <circle cx="215" cy="256" r="10" fill="#0B132B" opacity="0.7"/>
+                  <rect x="156" y="134" width="48" height="24" rx="12" fill="#0B132B" opacity="0.65"/>
+                </g>
+
+                <defs>
+                  <linearGradient id="nozzleGrad" x1="168" y1="60" x2="192" y2="60" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#94A3B8"/>
+                    <stop offset="0.5" stop-color="#F8FAFC"/>
+                    <stop offset="1" stop-color="#64748B"/>
+                  </linearGradient>
+                  <linearGradient id="layerGrad1" x1="75" y1="0" x2="285" y2="0" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#1D4ED8"/>
+                    <stop offset="0.5" stop-color="#3B82F6"/>
+                    <stop offset="1" stop-color="#1E40AF"/>
+                  </linearGradient>
+                  <linearGradient id="layerGrad2" x1="75" y1="0" x2="285" y2="0" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#2563EB"/>
+                    <stop offset="0.5" stop-color="#60A5FA"/>
+                    <stop offset="1" stop-color="#1D4ED8"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+
+            <!-- Bottom Technical Spec Strip -->
+            <div class="grid grid-cols-2 gap-3 pt-3 border-t border-white/10 text-xs font-mono">
+              <div class="bg-afNavy/70 p-2.5 rounded-xl border border-white/5">
+                <span class="text-slate-400 block" data-i18n="telemetryWorkflow">FLUX INTÉGRÉ</span>
+                <span class="text-white font-semibold" data-i18n="telemetryMotto">Concevoir. Imprimer. Livrer.</span>
+              </div>
+              <div class="bg-afNavy/70 p-2.5 rounded-xl border border-white/5">
+                <span class="text-slate-400 block" data-i18n="telemetryPartners">PARTENAIRES TECH</span>
+                <span class="text-afCyan font-semibold">EPITUM • CREALITY</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 2. QUI SOMMES-NOUS & NOTRE ADN ==================== -->
+  <section id="about" class="py-20 bg-white border-b border-slate-200/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+        <!-- Left: Mission & Vision -->
+        <div class="lg:col-span-5 space-y-6">
+          <div class="inline-flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-widest text-afCyanDark">
+            <span class="w-6 h-[2px] bg-afCyanDark"></span>
+            <span data-i18n="aboutKicker">QUI SOMMES-NOUS ?</span>
+          </div>
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-afNavy tracking-tight" data-i18n="aboutTitle">
+            La nouvelle génération des Fab d'impression 3D
+          </h2>
+          <p class="text-slate-600 leading-relaxed text-base" data-i18n="aboutDesc">
+            Advanced Fab 3D (AF3D) est le spécialiste de la 3D professionnelle. Nous transformons rapidement vos idées en pièces techniques performantes, grâce à une équipe d'ingénieurs experts, des équipements industriels de dernière génération et des partenaires internationaux reconnus.
+          </p>
+
+          <!-- Vision Card -->
+          <div class="p-6 rounded-2xl bg-afNavy text-white relative overflow-hidden shadow-lg">
+            <div class="absolute right-0 top-0 w-24 h-24 bg-afCyan/20 rounded-bl-full"></div>
+            <div class="font-mono text-xs uppercase tracking-widest text-afCyan mb-2" data-i18n="visionLabel">NOTRE VISION</div>
+            <p class="text-sm sm:text-base font-medium leading-relaxed text-slate-100" data-i18n="visionText">
+              Faire de la fabrication additive un levier de compétitivité majeur pour l'industrie marocaine, au plus près des besoins techniques de chaque client.
+            </p>
+          </div>
+        </div>
+
+        <!-- Right: Notre ADN (4 Core Pillars) -->
+        <div class="lg:col-span-7">
+          <div class="mb-6 flex items-center justify-between">
+            <span class="font-mono text-xs font-bold uppercase tracking-widest text-slate-400" data-i18n="dnaLabel">NOTRE ADN // 4 PILIERS</span>
+            <span class="text-xs font-medium text-afCyanDark" data-i18n="dnaQuote">« Plus proches de vos besoins, plus à l'écoute de vos attentes. »</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <!-- Pillar 1: Innovation -->
+            <div class="p-6 rounded-2xl bg-afLight border border-slate-200/90 hover:border-afCyan transition-all group">
+              <div class="w-11 h-11 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-afCyanDark mb-4 group-hover:bg-afNavy group-hover:text-afCyan transition-colors shadow-sm">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              </div>
+              <h3 class="text-lg font-bold text-afNavy mb-2" data-i18n="dna1Title">Innovation</h3>
+              <p class="text-sm text-slate-600 leading-relaxed" data-i18n="dna1Desc">
+                Technologies de fabrication additive, numérisation 3D et méthodes d'ingénierie de dernière génération.
+              </p>
+            </div>
+
+            <!-- Pillar 2: Expertise -->
+            <div class="p-6 rounded-2xl bg-afLight border border-slate-200/90 hover:border-afCyan transition-all group">
+              <div class="w-11 h-11 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-afCyanDark mb-4 group-hover:bg-afNavy group-hover:text-afCyan transition-colors shadow-sm">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+              </div>
+              <h3 class="text-lg font-bold text-afNavy mb-2" data-i18n="dna2Title">Expertise</h3>
+              <p class="text-sm text-slate-600 leading-relaxed" data-i18n="dna2Desc">
+                Compétences d'ingénierie de haut niveau en conception DfAM, choix matériaux et optimisation mécanique.
+              </p>
+            </div>
+
+            <!-- Pillar 3: Réactivité -->
+            <div class="p-6 rounded-2xl bg-afLight border border-slate-200/90 hover:border-afCyan transition-all group">
+              <div class="w-11 h-11 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-afCyanDark mb-4 group-hover:bg-afNavy group-hover:text-afCyan transition-colors shadow-sm">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+              <h3 class="text-lg font-bold text-afNavy mb-2" data-i18n="dna3Title">Réactivité</h3>
+              <p class="text-sm text-slate-600 leading-relaxed" data-i18n="dna3Desc">
+                Des délais courts et une production locale agile au Maroc pour accélérer vos cycles de développement.
+              </p>
+            </div>
+
+            <!-- Pillar 4: Service Premium -->
+            <div class="p-6 rounded-2xl bg-afLight border border-slate-200/90 hover:border-afCyan transition-all group">
+              <div class="w-11 h-11 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-afCyanDark mb-4 group-hover:bg-afNavy group-hover:text-afCyan transition-colors shadow-sm">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              </div>
+              <h3 class="text-lg font-bold text-afNavy mb-2" data-i18n="dna4Title">Service premium</h3>
+              <p class="text-sm text-slate-600 leading-relaxed" data-i18n="dna4Desc">
+                Un interlocuteur technique dédié vous accompagne de l'étude initiale jusqu'au contrôle qualité et à la livraison.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 3. NOS SECTEURS PRIORITAIRES ==================== -->
+  <section id="sectors" class="py-20 bg-afLight bg-light-grid bg-[size:32px_32px]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- Section Header -->
+      <div class="max-w-3xl mb-12">
+        <div class="inline-flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-widest text-afCyanDark mb-3">
+          <span class="w-6 h-[2px] bg-afCyanDark"></span>
+          <span data-i18n="sectorsKicker">NOS SECTEURS PRIORITAIRES</span>
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-afNavy tracking-tight" data-i18n="sectorsTitle">
+          Trois secteurs, une même exigence
+        </h2>
+        <p class="text-slate-600 mt-3 text-base sm:text-lg" data-i18n="sectorsSubtitle">
+          Industriel, équipementier, clinique ou bureau d'études : des solutions additives certifiées pour les environnements les plus exigeants.
+        </p>
+      </div>
+
+      <!-- Interactive Sector Tabs -->
+      <div class="flex flex-wrap gap-3 mb-8" role="tablist">
+        <button onclick="selectSector('auto')" id="tab-auto" class="sector-tab active px-6 py-3.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2.5 bg-afNavy text-white shadow-md cursor-pointer">
+          <svg class="w-5 h-5 text-afCyan" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+          <span data-i18n="sectorAutoTab">Automobile</span>
+        </button>
+        <button onclick="selectSector('aero')" id="tab-aero" class="sector-tab px-6 py-3.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2.5 bg-white text-slate-700 border border-slate-200 hover:border-afCyan cursor-pointer">
+          <svg class="w-5 h-5 text-afCyanDark" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+          <span data-i18n="sectorAeroTab">Aéronautique</span>
+        </button>
+        <button onclick="selectSector('med')" id="tab-med" class="sector-tab px-6 py-3.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2.5 bg-white text-slate-700 border border-slate-200 hover:border-afCyan cursor-pointer">
+          <svg class="w-5 h-5 text-afCyanDark" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+          <span data-i18n="sectorMedTab">Médical</span>
+        </button>
+      </div>
+
+      <!-- Sector Content Panel -->
+      <div id="sector-panel" class="bg-white rounded-2xl border border-slate-200/90 shadow-xl overflow-hidden transition-all">
+        <!-- Populated dynamically via JS for crisp bilingual rendering -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 4. NOTRE OFFRE (01 - 06) ==================== -->
+  <section id="services" class="py-20 bg-white border-t border-slate-200/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-14 gap-6">
+        <div>
+          <div class="inline-flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-widest text-afCyanDark mb-3">
+            <span class="w-6 h-[2px] bg-afCyanDark"></span>
+            <span data-i18n="offerKicker">NOTRE OFFRE</span>
+          </div>
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-afNavy tracking-tight" data-i18n="offerTitle">
+            De l'idée à la pièce finie
+          </h2>
+        </div>
+        <p class="text-slate-600 max-w-md text-sm sm:text-base" data-i18n="offerSubtitle">
+          Un accompagnement complet couvrant l'ingénierie numérique, l'impression industrielle, la numérisation 3D et le transfert de compétences.
+        </p>
+      </div>
+
+      <!-- 6 Service Cards Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- 01 -->
+        <div class="p-7 rounded-2xl bg-afLight border border-slate-200/90 hover:border-afCyanDark hover:shadow-lg transition-all flex flex-col justify-between group">
+          <div>
+            <div class="flex items-center justify-between mb-5">
+              <span class="font-mono text-2xl font-extrabold text-afCyanDark">01</span>
+              <span class="text-xs font-mono px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-500">CAD / DfAM</span>
+            </div>
+            <h3 class="text-xl font-bold text-afNavy mb-2.5 group-hover:text-afCyanDark transition-colors" data-i18n="srv1Title">Conception & DfAM</h3>
+            <p class="text-sm text-slate-600 leading-relaxed" data-i18n="srv1Desc">
+              Modélisation 3D et optimisation topologique spécifiquement conçues pour exploiter tout le potentiel de l'impression 3D.
+            </p>
+          </div>
+        </div>
+
+        <!-- 02 -->
+        <div class="p-7 rounded-2xl bg-afLight border border-slate-200/90 hover:border-afCyanDark hover:shadow-lg transition-all flex flex-col justify-between group">
+          <div>
+            <div class="flex items-center justify-between mb-5">
+              <span class="font-mono text-2xl font-extrabold text-afCyanDark">02</span>
+              <span class="text-xs font-mono px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-500">FAST ITERATION</span>
+            </div>
+            <h3 class="text-xl font-bold text-afNavy mb-2.5 group-hover:text-afCyanDark transition-colors" data-i18n="srv2Title">Prototypage rapide</h3>
+            <p class="text-sm text-slate-600 leading-relaxed" data-i18n="srv2Desc">
+              Testez, validez et itérez vos conceptions mécaniques et ergonomiques en quelques jours seulement.
+            </p>
+          </div>
+        </div>
+
+        <!-- 03 -->
+        <div class="p-7 rounded-2xl bg-afLight border border-slate-200/90 hover:border-afCyanDark hover:shadow-lg transition-all flex flex-col justify-between group">
+          <div>
+            <div class="flex items-center justify-between mb-5">
+              <span class="font-mono text-2xl font-extrabold text-afCyanDark">03</span>
+              <span class="text-xs font-mono px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-500">ON-DEMAND</span>
+            </div>
+            <h3 class="text-xl font-bold text-afNavy mb-2.5 group-hover:text-afCyanDark transition-colors" data-i18n="srv3Title">Pièces fonctionnelles</h3>
+            <p class="text-sm text-slate-600 leading-relaxed" data-i18n="srv3Desc">
+              Fabrication de petites séries et de pièces uniques prêtes à l'emploi en polymères techniques et composites fibrés.
+            </p>
+          </div>
+        </div>
+
+        <!-- 04 -->
+        <div class="p-7 rounded-2xl bg-afLight border border-slate-200/90 hover:border-afCyanDark hover:shadow-lg transition-all flex flex-col justify-between group">
+          <div>
+            <div class="flex items-center justify-between mb-5">
+              <span class="font-mono text-2xl font-extrabold text-afCyanDark">04</span>
+              <span class="text-xs font-mono px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-500">JIGS & FIXTURES</span>
+            </div>
+            <h3 class="text-xl font-bold text-afNavy mb-2.5 group-hover:text-afCyanDark transition-colors" data-i18n="srv4Title">Outillage & gabarits</h3>
+            <p class="text-sm text-slate-600 leading-relaxed" data-i18n="srv4Desc">
+              Gabarits de perçage, montages de contrôle et outillages sur mesure pour optimiser vos lignes de production.
+            </p>
+          </div>
+        </div>
+
+        <!-- 05 -->
+        <div class="p-7 rounded-2xl bg-afLight border border-slate-200/90 hover:border-afCyanDark hover:shadow-lg transition-all flex flex-col justify-between group">
+          <div>
+            <div class="flex items-center justify-between mb-5">
+              <span class="font-mono text-2xl font-extrabold text-afCyanDark">05</span>
+              <span class="text-xs font-mono px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-500">SERMOON S1</span>
+            </div>
+            <h3 class="text-xl font-bold text-afNavy mb-2.5 group-hover:text-afCyanDark transition-colors" data-i18n="srv5Title">Scan 3D & rétro-ingénierie</h3>
+            <p class="text-sm text-slate-600 leading-relaxed" data-i18n="srv5Desc">
+              Numérisation haute précision au scanner Sermoon S1 pour reproduire, contrôler ou améliorer vos pièces existantes.
+            </p>
+          </div>
+        </div>
+
+        <!-- 06 -->
+        <div class="p-7 rounded-2xl bg-afLight border border-slate-200/90 hover:border-afCyanDark hover:shadow-lg transition-all flex flex-col justify-between group">
+          <div>
+            <div class="flex items-center justify-between mb-5">
+              <span class="font-mono text-2xl font-extrabold text-afCyanDark">06</span>
+              <span class="text-xs font-mono px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-500">ACADEMY</span>
+            </div>
+            <h3 class="text-xl font-bold text-afNavy mb-2.5 group-hover:text-afCyanDark transition-colors" data-i18n="srv6Title">Conseil & formation</h3>
+            <p class="text-sm text-slate-600 leading-relaxed" data-i18n="srv6Desc">
+              Accompagnement stratégique et formation de vos équipes pour intégrer durablement la fabrication additive chez vous.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 5. NOTRE PARC MACHINES & PARTENAIRES ==================== -->
+  <section id="machines" class="py-20 bg-afNavy text-white relative overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <!-- Header + Partner Strip -->
+      <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-14">
+        <div>
+          <div class="inline-flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-widest text-afCyan mb-3">
+            <span class="w-6 h-[2px] bg-afCyan"></span>
+            <span data-i18n="machinesKicker">NOTRE PARC MACHINES</span>
+          </div>
+          <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight" data-i18n="machinesTitle">
+            Des équipements professionnels, de la numérisation à la production
+          </h2>
+        </div>
+
+        <!-- International Partners Box -->
+        <div class="bg-afSlate/90 border border-white/10 rounded-2xl px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <span class="text-xs font-mono uppercase tracking-wider text-slate-400" data-i18n="partnersLabel">Nos partenaires internationaux :</span>
+          <div class="flex items-center gap-4">
+            <span class="px-3.5 py-1.5 rounded-lg bg-white/10 font-mono font-bold text-sm tracking-widest text-white border border-white/15">EPITUM</span>
+            <span class="px-3.5 py-1.5 rounded-lg bg-white/10 font-mono font-bold text-sm tracking-widest text-afCyan border border-afCyan/30">CREALITY</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3 Flagship Hardware Systems -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-7">
+        <!-- Machine 1: EPITUM JL -->
+        <div class="rounded-2xl bg-afSlate/80 border border-white/10 hover:border-afCyan/60 p-7 flex flex-col justify-between transition-all">
+          <div>
+            <div class="flex items-center justify-between mb-6">
+              <span class="px-3 py-1 rounded-full bg-afCyan/15 text-afCyan font-mono text-xs font-bold">INDUSTRIAL FORMAT</span>
+              <svg class="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            </div>
+            <h3 class="text-2xl font-extrabold font-mono text-white mb-3">EPITUM JL</h3>
+            <p class="text-slate-300 text-sm leading-relaxed mb-6" data-i18n="mac1Desc">
+              Imprimante industrielle grand format conçue pour la fabrication de pièces techniques volumineuses et de haute précision.
+            </p>
+          </div>
+          <div class="pt-4 border-t border-white/10 flex items-center justify-between text-xs font-mono text-slate-400">
+            <span data-i18n="mac1Tag1">Grand volume</span>
+            <span class="text-afCyan" data-i18n="mac1Tag2">Haute précision</span>
+          </div>
+        </div>
+
+        <!-- Machine 2: CREALITY K2 PLUS -->
+        <div class="rounded-2xl bg-afSlate/80 border border-white/10 hover:border-afCyan/60 p-7 flex flex-col justify-between transition-all">
+          <div>
+            <div class="flex items-center justify-between mb-6">
+              <span class="px-3 py-1 rounded-full bg-afCyan/15 text-afCyan font-mono text-xs font-bold">MULTI-MATERIAL</span>
+              <svg class="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </div>
+            <h3 class="text-2xl font-extrabold font-mono text-white mb-3">CREALITY K2 PLUS</h3>
+            <p class="text-slate-300 text-sm leading-relaxed mb-6" data-i18n="mac2Desc">
+              Impression haute vitesse et multi-matériaux idéale pour le prototypage rapide, les pièces complexes et les petites séries.
+            </p>
+          </div>
+          <div class="pt-4 border-t border-white/10 flex items-center justify-between text-xs font-mono text-slate-400">
+            <span data-i18n="mac2Tag1">Haute vitesse</span>
+            <span class="text-afCyan" data-i18n="mac2Tag2">Petites séries</span>
+          </div>
+        </div>
+
+        <!-- Machine 3: SCANNER SERMOON S1 -->
+        <div class="rounded-2xl bg-afSlate/80 border border-white/10 hover:border-afCyan/60 p-7 flex flex-col justify-between transition-all">
+          <div>
+            <div class="flex items-center justify-between mb-6">
+              <span class="px-3 py-1 rounded-full bg-afCyan/15 text-afCyan font-mono text-xs font-bold">3D METROLOGY</span>
+              <svg class="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </div>
+            <h3 class="text-2xl font-extrabold font-mono text-white mb-3">SCANNER SERMOON S1</h3>
+            <p class="text-slate-300 text-sm leading-relaxed mb-6" data-i18n="mac3Desc">
+              Numérisation 3D haute précision au service de la rétro-ingénierie, de la duplication de pièces et du contrôle dimensionnel.
+            </p>
+          </div>
+          <div class="pt-4 border-t border-white/10 flex items-center justify-between text-xs font-mono text-slate-400">
+            <span data-i18n="mac3Tag1">Scan haute précision</span>
+            <span class="text-afCyan" data-i18n="mac3Tag2">Rétro-ingénierie</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 6. MATÉRIAUX INDUSTRIELS ==================== -->
+  <section id="materials" class="py-20 bg-afLight border-b border-slate-200/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl mb-12">
+        <div class="inline-flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-widest text-afCyanDark mb-3">
+          <span class="w-6 h-[2px] bg-afCyanDark"></span>
+          <span data-i18n="materialsKicker">POLYMÈRES & COMPOSITES</span>
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-afNavy tracking-tight" data-i18n="materialsTitle">
+          Matériaux techniques adaptés à chaque contrainte
+        </h2>
+        <p class="text-slate-600 mt-3 text-base" data-i18n="materialsSubtitle">
+          Sélectionnez un matériau pour inspecter ses propriétés mécaniques, thermiques et ses applications industrielles.
+        </p>
+      </div>
+
+      <!-- Interactive Materials Grid -->
+      <div id="materials-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+        <!-- Populated dynamically by JS -->
+      </div>
+
+      <!-- Selected Material Technical Detail Card -->
+      <div id="material-detail-box" class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-md">
+        <!-- Populated dynamically by JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 7. NOTRE MÉTHODE & GARANTIES ==================== -->
+  <section id="method" class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16">
+        <div class="inline-flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-widest text-afCyanDark mb-3">
+          <span data-i18n="methodKicker">NOTRE MÉTHODE</span>
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-afNavy tracking-tight" data-i18n="methodTitle">
+          Un processus fluide en 4 étapes maîtrisées
+        </h2>
+      </div>
+
+      <!-- 4-Step Process Stepper -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+        <!-- Step 1 -->
+        <div class="relative p-6 rounded-2xl bg-afLight border border-slate-200">
+          <div class="w-10 h-10 rounded-xl bg-afNavy text-afCyan font-mono font-bold flex items-center justify-center mb-4">1</div>
+          <h3 class="text-lg font-bold text-afNavy mb-2" data-i18n="step1Title">Brief</h3>
+          <p class="text-sm text-slate-600" data-i18n="step1Desc">Analyse de votre cahier des charges, fichier CAO (STEP/STL) ou pièce physique à scanner.</p>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="relative p-6 rounded-2xl bg-afLight border border-slate-200">
+          <div class="w-10 h-10 rounded-xl bg-afNavy text-afCyan font-mono font-bold flex items-center justify-center mb-4">2</div>
+          <h3 class="text-lg font-bold text-afNavy mb-2" data-i18n="step2Title">Étude & devis</h3>
+          <p class="text-sm text-slate-600" data-i18n="step2Desc">Validation DfAM, sélection du matériau optimal et proposition chiffrée sous 24h.</p>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="relative p-6 rounded-2xl bg-afLight border border-slate-200">
+          <div class="w-10 h-10 rounded-xl bg-afNavy text-afCyan font-mono font-bold flex items-center justify-center mb-4">3</div>
+          <h3 class="text-lg font-bold text-afNavy mb-2" data-i18n="step3Title">Fabrication</h3>
+          <p class="text-sm text-slate-600" data-i18n="step3Desc">Production sur notre parc machines industriel avec suivi des paramètres de précision.</p>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="relative p-6 rounded-2xl bg-afLight border border-slate-200">
+          <div class="w-10 h-10 rounded-xl bg-afCyanDark text-white font-mono font-bold flex items-center justify-center mb-4">4</div>
+          <h3 class="text-lg font-bold text-afNavy mb-2" data-i18n="step4Title">Contrôle & livraison</h3>
+          <p class="text-sm text-slate-600" data-i18n="step4Desc">Vérification dimensionnelle rigoureuse et expédition rapide partout au Maroc.</p>
+        </div>
+      </div>
+
+      <!-- Guarantees / NDA Banner -->
+      <div class="rounded-2xl bg-gradient-to-r from-afNavy to-afSlate p-8 sm:p-10 text-white flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8 shadow-xl">
+        <div class="space-y-3 max-w-2xl">
+          <div class="inline-flex items-center gap-2 text-afCyan font-mono text-xs font-bold uppercase tracking-wider">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            <span data-i18n="ndaBadge">ENGAGEMENT QUALITÉ & SÉCURITÉ</span>
+          </div>
+          <h3 class="text-2xl sm:text-3xl font-extrabold" data-i18n="ndaTitle">
+            Qualité maîtrisée. Délais tenus. Confidentialité garantie.
+          </h3>
+          <p class="text-slate-300 text-sm sm:text-base" data-i18n="ndaDesc">
+            Vos fichiers CAO et vos innovations industrielles restent strictement protégés (NDA) à chaque étape du processus.
+          </p>
+        </div>
+        <button onclick="openQuoteModal()" class="shrink-0 bg-afCyan hover:bg-sky-400 text-afNavy font-bold px-7 py-4 rounded-xl transition-all cursor-pointer shadow-lg">
+          <span data-i18n="ndaCta">Soumettre un fichier confidentiel</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 8. CONVERSION & FOOTER ==================== -->
+  <footer id="contact" class="bg-afNavy text-white border-t border-white/10">
+    <!-- Top CTA Band -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-b border-white/10">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+        <div class="lg:col-span-8 space-y-4">
+          <span class="font-mono text-xs uppercase tracking-widest text-afCyan" data-i18n="footerKicker">PARLONS DE VOTRE PROJET</span>
+          <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight" data-i18n="footerTitle">
+            Un projet ? Une pièce à fabriquer ?
+          </h2>
+          <p class="text-slate-300 text-base sm:text-lg max-w-2xl" data-i18n="footerDesc">
+            Envoyez-nous votre fichier 3D ou exprimez votre besoin : une équipe dédiée vous répond rapidement avec une solution technique et un devis.
+          </p>
+        </div>
+        <div class="lg:col-span-4 flex flex-col sm:flex-row lg:flex-col gap-3">
+          <button onclick="openQuoteModal()" class="w-full bg-afCyan hover:bg-sky-400 text-afNavy font-bold px-6 py-4 rounded-xl transition-all cursor-pointer text-center shadow-lg">
+            <span data-i18n="footerCtaBtn">Demander un devis en ligne</span>
+          </button>
+          <a href="mailto:contact@af3d.ma" class="w-full bg-white/10 hover:bg-white/15 text-white font-mono text-sm font-semibold px-6 py-3.5 rounded-xl border border-white/15 text-center transition-all">
+            contact@af3d.ma
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Info & QR Code Card -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-start">
+        <!-- Col 1: Brand -->
+        <div class="space-y-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-lg bg-afCyan/20 border border-afCyan/40 flex items-center justify-center font-mono font-extrabold text-afCyan">AF</div>
+            <span class="font-extrabold text-lg tracking-tight">Advanced Fab 3D</span>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed" data-i18n="footerBio">
+            Startup marocaine nouvelle génération spécialisée dans la fabrication additive industrielle, le prototypage rapide et la rétro-ingénierie 3D.
+          </p>
+        </div>
+
+        <!-- Col 2: Direct Contact -->
+        <div class="space-y-2.5 text-sm">
+          <div class="font-mono text-xs uppercase tracking-wider text-afCyan mb-3" data-i18n="footerContactHeader">CONTACT DIRECT</div>
+          <p class="text-slate-300 flex items-center gap-2">
+            <span class="text-afCyan">🌐</span>
+            <a href="https://www.af3d.ma" target="_blank" rel="noopener" class="hover:text-afCyan transition-colors font-mono">www.af3d.ma</a>
+          </p>
+          <p class="text-slate-300 flex items-center gap-2">
+            <span class="text-afCyan">✉️</span>
+            <a href="mailto:contact@af3d.ma" class="hover:text-afCyan transition-colors font-mono">contact@af3d.ma</a>
+          </p>
+          <p class="text-slate-300 flex items-center gap-2">
+            <span class="text-afCyan">📞</span>
+            <a href="tel:+212662877215" class="hover:text-afCyan transition-colors font-mono">+212 6 62 87 72 15</a>
+          </p>
+        </div>
+
+        <!-- Col 3: Network CTA -->
+        <div class="space-y-2.5 text-sm">
+          <div class="font-mono text-xs uppercase tracking-wider text-afCyan mb-3" data-i18n="footerNetworkHeader">RÉSEAU PARTENAIRES</div>
+          <p class="text-slate-300 text-xs leading-relaxed" data-i18n="footerNetworkText">
+            Industriel, équipementier, clinique ou bureau d'études ? Rejoignez notre réseau de partenaires au Maroc.
+          </p>
+        </div>
+
+        <!-- Col 4: Stylized Portfolio QR Card -->
+        <div class="bg-afSlate/90 border border-white/10 rounded-2xl p-4 flex items-center gap-4">
+          <div class="w-16 h-16 shrink-0 bg-white rounded-xl p-1.5 flex items-center justify-center">
+            <!-- Crisp Vector QR Motif -->
+            <svg class="w-full h-full text-afNavy" viewBox="0 0 36 36" fill="currentColor">
+              <path d="M2 2h10v10H2V2zm2 2v6h6V4H4zm2 2h2v2H6V6zm18-4h10v10H24V2zm2 2v6h6V4h-6zm2 2h2v2h-2V6zM2 24h10v10H2V24zm2 2v6h6v-6H4zm2 2h2v2H6v-2zm10-24h2v4h-2V4zm4 2h2v6h-2V6zm-6 6h4v2h-4v-2zm6 4h6v2h-6v-2zm-14 2h6v2H8v-2zm10 2h2v6h-2v-6zm6 2h4v4h-4v-4zm-8 6h4v6h-4v-6zm8 4h6v2h-6v-2z"/>
+            </svg>
+          </div>
+          <div>
+            <div class="text-xs font-bold text-white leading-snug" data-i18n="qrCaption">Scannez pour découvrir nos réalisations</div>
+            <div class="font-mono text-[11px] text-afCyan mt-1">www.af3d.ma</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-10 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
+        <p>© 2026 Advanced Fab 3D (AF3D). <span data-i18n="footerRights">Tous droits réservés.</span></p>
+        <p class="font-mono" data-i18n="footerMotto">Concevoir. Imprimer. Livrer. Plus vite, plus précis.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==================== INTERACTIVE 3D QUOTE & FILE UPLOAD MODAL ==================== -->
+  <div id="quote-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-afNavy/80 backdrop-blur-sm p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden my-8">
+      <!-- Modal Header -->
+      <div class="bg-afNavy text-white px-6 py-5 flex items-center justify-between">
+        <div>
+          <span class="font-mono text-[11px] uppercase tracking-widest text-afCyan block">AF3D // INSTANT BRIEF</span>
+          <h3 class="text-xl font-bold" data-i18n="modalTitle">Demander une étude & un devis 3D</h3>
+        </div>
+        <button onclick="closeQuoteModal()" class="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer" aria-label="Close">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <form id="quote-form" onsubmit="handleQuoteSubmit(event)" class="p-6 sm:p-8 space-y-5">
+        <!-- Drag & Drop CAD File Zone -->
+        <div>
+          <label class="block text-xs font-mono font-bold uppercase tracking-wider text-slate-500 mb-2" data-i18n="modalFileLabel">
+            1. FICHIER 3D (STL, STEP, OBJ) OU CAHIER DES CHARGES
+          </label>
+          <div id="drop-zone" onclick="document.getElementById('cad-file-input').click()" class="border-2 border-dashed border-slate-300 hover:border-afCyanDark rounded-xl p-5 text-center cursor-pointer bg-afLight transition-all">
+            <input type="file" id="cad-file-input" class="hidden" accept=".stl,.step,.stp,.obj,.iges,.pdf,.zip" onchange="handleFileSelect(this)" />
+            <svg class="w-8 h-8 mx-auto text-afCyanDark mb-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+            <p id="file-status-text" class="text-sm font-semibold text-afNavy" data-i18n="modalDropText">Cliquez pour importer un fichier (.STL, .STEP, .OBJ, .PDF)</p>
+            <p class="text-xs text-slate-500 mt-1" data-i18n="modalDropSub">Transfert chiffré • Protégé par accord de confidentialité (NDA)</p>
+          </div>
+        </div>
+
+        <!-- Sector & Service Row -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5" data-i18n="modalSectorLabel">Secteur d'activité</label>
+            <select id="modal-sector" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-afCyanDark focus:outline-none bg-white">
+              <option value="Automobile">Automobile</option>
+              <option value="Aéronautique">Aéronautique / Aerospace</option>
+              <option value="Médical">Médical / Healthcare</option>
+              <option value="Industrie">Industrie / Bureau d'études</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5" data-i18n="modalMaterialLabel">Matériau souhaité</label>
+            <select id="modal-material" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-afCyanDark focus:outline-none bg-white">
+              <option value="À définir avec AF3D">Conseil ingénieur AF3D</option>
+              <option value="Composites fibrés">Composites fibrés (Carbone / Verre)</option>
+              <option value="Nylon (PA)">Nylon (PA)</option>
+              <option value="ABS / ASA">ABS / ASA</option>
+              <option value="PC">Polycarbonate (PC)</option>
+              <option value="PETG">PETG</option>
+              <option value="PLA">PLA</option>
+              <option value="TPU">TPU (Flexible)</option>
+              <option value="Résines techniques">Résines techniques</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Contact Details -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5" data-i18n="modalNameLabel">Nom & Société *</label>
+            <input type="text" required placeholder="Ex: Karim Bennani — AutoTech" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-afCyanDark focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5" data-i18n="modalEmailLabel">Email professionnel *</label>
+            <input type="email" required placeholder="nom@entreprise.ma" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-afCyanDark focus:outline-none" />
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5" data-i18n="modalNotesLabel">Précisions (quantité, délai, contraintes mécaniques)</label>
+          <textarea rows="2" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:border-afCyanDark focus:outline-none" placeholder="..."></textarea>
+        </div>
+
+        <!-- NDA Checkbox -->
+        <label class="flex items-center gap-2.5 text-xs text-slate-600 cursor-pointer">
+          <input type="checkbox" checked class="rounded text-afCyanDark focus:ring-afCyanDark" />
+          <span data-i18n="modalNdaCheck">Je souhaite bénéficier de la garantie de confidentialité AF3D (protection IP & fichiers).</span>
+        </label>
+
+        <!-- Submit Button -->
+        <div class="pt-2 flex items-center justify-end gap-3">
+          <button type="button" onclick="closeQuoteModal()" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer" data-i18n="modalCancel">Annuler</button>
+          <button type="submit" class="bg-afCyanDark hover:bg-afNavy text-white font-bold px-6 py-3 rounded-xl shadow-md transition-all cursor-pointer text-sm" data-i18n="modalSubmit">
+            Envoyer ma demande à AF3D
+          </button>
+        </div>
+      </form>
+
+      <!-- Confirmation Message Box (Replaces any alert) -->
+      <div id="quote-confirmation" class="hidden p-8 text-center space-y-4">
+        <div class="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <h4 class="text-2xl font-extrabold text-afNavy" data-i18n="confirmTitle">Demande transmise avec succès !</h4>
+        <p class="text-sm text-slate-600 max-w-md mx-auto" data-i18n="confirmDesc">
+          Merci. Un ingénieur Advanced Fab 3D analyse votre besoin et vous recontactera rapidement avec une proposition technique et un devis.
+        </p>
+        <div class="pt-2">
+          <button onclick="resetAndCloseModal()" class="bg-afNavy text-white font-semibold px-6 py-2.5 rounded-xl text-sm cursor-pointer" data-i18n="confirmBtn">Fermer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== JAVASCRIPT: BILINGUAL ENGINE & INTERACTIVITY ==================== -->
+  <script>
+    // Current State
+    let currentLang = 'fr';
+    let currentSector = 'auto';
+    let selectedMaterialIndex = 6; // Default highlight: Composites fibrés
+
+    // Full Bilingual Dictionary (FR / EN)
+    const translations = {
+      fr: {
+        brandTagline: "L'expertise en fabrication additive",
+        navAbout: "À propos",
+        navSectors: "Secteurs",
+        navServices: "Services",
+        navMachines: "Parc Machines",
+        navMaterials: "Matériaux",
+        navMethod: "Méthode",
+        navQuote: "Demander un devis",
+        heroBadge: "STARTUP MAROCAINE — GÉNÉRATION NOUVELLE",
+        heroTitle: "La fabrication additive qui accélère l'industrie",
+        heroSubtitle: "Concevoir. Imprimer. Livrer. Plus vite, plus précis. Nous transformons rapidement vos idées en pièces techniques performantes grâce à des ingénieurs experts et des équipements de dernière génération.",
+        heroCtaPrimary: "Lancer un projet / Devis 3D",
+        heroCtaSecondary: "Explorer nos capacités",
+        heroStat1: "De l'idée à la pièce finie",
+        heroStat2: "Confidentialité garantie",
+        heroStat3: "Production locale agile",
+        telemetryWorkflow: "FLUX INTÉGRÉ",
+        telemetryMotto: "Concevoir. Imprimer. Livrer.",
+        telemetryPartners: "PARTENAIRES TECH",
+        aboutKicker: "QUI SOMMES-NOUS ?",
+        aboutTitle: "La nouvelle génération des Fab d'impression 3D",
+        aboutDesc: "Advanced Fab 3D (AF3D) est le spécialiste de la 3D professionnelle. Nous transformons rapidement vos idées en pièces techniques performantes, grâce à une équipe d'ingénieurs experts, des équipements industriels de dernière génération et des partenaires internationaux reconnus.",
+        visionLabel: "NOTRE VISION",
+        visionText: "Faire de la fabrication additive un levier de compétitivité majeur pour l'industrie marocaine, au plus près des besoins techniques de chaque client.",
+        dnaLabel: "NOTRE ADN // 4 PILIERS",
+        dnaQuote: "« Plus proches de vos besoins, plus à l'écoute de vos attentes. »",
+        dna1Title: "Innovation",
+        dna1Desc: "Technologies de fabrication additive, numérisation 3D et méthodes d'ingénierie de dernière génération.",
+        dna2Title: "Expertise",
+        dna2Desc: "Compétences d'ingénierie de haut niveau en conception DfAM, choix matériaux et optimisation mécanique.",
+        dna3Title: "Réactivité",
+        dna3Desc: "Des délais courts et une production locale agile au Maroc pour accélérer vos cycles de développement.",
+        dna4Title: "Service premium",
+        dna4Desc: "Un interlocuteur technique dédié vous accompagne de l'étude initiale jusqu'au contrôle qualité et à la livraison.",
+        sectorsKicker: "NOS SECTEURS PRIORITAIRES",
+        sectorsTitle: "Trois secteurs, une même exigence",
+        sectorsSubtitle: "Industriel, équipementier, clinique ou bureau d'études : des solutions additives certifiées pour les environnements les plus exigeants.",
+        sectorAutoTab: "Automobile",
+        sectorAeroTab: "Aéronautique",
+        sectorMedTab: "Médical",
+        offerKicker: "NOTRE OFFRE",
+        offerTitle: "De l'idée à la pièce finie",
+        offerSubtitle: "Un accompagnement complet couvrant l'ingénierie numérique, l'impression industrielle, la numérisation 3D et le transfert de compétences.",
+        srv1Title: "Conception & DfAM",
+        srv1Desc: "Modélisation 3D et optimisation topologique spécifiquement conçues pour exploiter tout le potentiel de l'impression 3D.",
+        srv2Title: "Prototypage rapide",
+        srv2Desc: "Testez, validez et itérez vos conceptions mécaniques et ergonomiques en quelques jours seulement.",
+        srv3Title: "Pièces fonctionnelles",
+        srv3Desc: "Fabrication de petites séries et de pièces uniques prêtes à l'emploi en polymères techniques et composites fibrés.",
+        srv4Title: "Outillage & gabarits",
+        srv4Desc: "Gabarits de perçage, montages de contrôle et outillages sur mesure pour optimiser vos lignes de production.",
+        srv5Title: "Scan 3D & rétro-ingénierie",
+        srv5Desc: "Numérisation haute précision au scanner Sermoon S1 pour reproduire, contrôler ou améliorer vos pièces existantes.",
+        srv6Title: "Conseil & formation",
+        srv6Desc: "Accompagnement stratégique et formation de vos équipes pour intégrer durablement la fabrication additive chez vous.",
+        machinesKicker: "NOTRE PARC MACHINES",
+        machinesTitle: "Des équipements professionnels, de la numérisation à la production",
+        partnersLabel: "Nos partenaires internationaux :",
+        mac1Desc: "Imprimante industrielle grand format conçue pour la fabrication de pièces techniques volumineuses et de haute précision.",
+        mac1Tag1: "Grand volume",
+        mac1Tag2: "Haute précision",
+        mac2Desc: "Impression haute vitesse et multi-matériaux idéale pour le prototypage rapide, les pièces complexes et les petites séries.",
+        mac2Tag1: "Haute vitesse",
+        mac2Tag2: "Petites séries",
+        mac3Desc: "Numérisation 3D haute précision au service de la rétro-ingénierie, de la duplication de pièces et du contrôle dimensionnel.",
+        mac3Tag1: "Scan haute précision",
+        mac3Tag2: "Rétro-ingénierie",
+        materialsKicker: "POLYMÈRES & COMPOSITES",
+        materialsTitle: "Matériaux techniques adaptés à chaque contrainte",
+        materialsSubtitle: "Sélectionnez un matériau pour inspecter ses propriétés mécaniques, thermiques et ses applications industrielles.",
+        methodKicker: "NOTRE MÉTHODE",
+        methodTitle: "Un processus fluide en 4 étapes maîtrisées",
+        step1Title: "Brief",
+        step1Desc: "Analyse de votre cahier des charges, fichier CAO (STEP/STL) ou pièce physique à scanner.",
+        step2Title: "Étude & devis",
+        step2Desc: "Validation DfAM, sélection du matériau optimal et proposition chiffrée sous 24h.",
+        step3Title: "Fabrication",
+        step3Desc: "Production sur notre parc machines industriel avec suivi des paramètres de précision.",
+        step4Title: "Contrôle & livraison",
+        step4Desc: "Vérification dimensionnelle rigoureuse et expédition rapide partout au Maroc.",
+        ndaBadge: "ENGAGEMENT QUALITÉ & SÉCURITÉ",
+        ndaTitle: "Qualité maîtrisée. Délais tenus. Confidentialité garantie.",
+        ndaDesc: "Vos fichiers CAO et vos innovations industrielles restent strictement protégés (NDA) à chaque étape du processus.",
+        ndaCta: "Soumettre un fichier confidentiel",
+        footerKicker: "PARLONS DE VOTRE PROJET",
+        footerTitle: "Un projet ? Une pièce à fabriquer ?",
+        footerDesc: "Envoyez-nous votre fichier 3D ou exprimez votre besoin : une équipe dédiée vous répond rapidement avec une solution technique et un devis.",
+        footerCtaBtn: "Demander un devis en ligne",
+        footerBio: "Startup marocaine nouvelle génération spécialisée dans la fabrication additive industrielle, le prototypage rapide et la rétro-ingénierie 3D.",
+        footerContactHeader: "CONTACT DIRECT",
+        footerNetworkHeader: "RÉSEAU PARTENAIRES",
+        footerNetworkText: "Industriel, équipementier, clinique ou bureau d'études ? Rejoignez notre réseau de partenaires au Maroc.",
+        qrCaption: "Scannez pour découvrir nos réalisations",
+        footerRights: "Tous droits réservés.",
+        footerMotto: "Concevoir. Imprimer. Livrer. Plus vite, plus précis.",
+        modalTitle: "Demander une étude & un devis 3D",
+        modalFileLabel: "1. FICHIER 3D (STL, STEP, OBJ) OU CAHIER DES CHARGES",
+        modalDropText: "Cliquez pour importer un fichier (.STL, .STEP, .OBJ, .PDF)",
+        modalDropSub: "Transfert chiffré • Protégé par accord de confidentialité (NDA)",
+        modalSectorLabel: "Secteur d'activité",
+        modalMaterialLabel: "Matériau souhaité",
+        modalNameLabel: "Nom & Société *",
+        modalEmailLabel: "Email professionnel *",
+        modalNotesLabel: "Précisions (quantité, délai, contraintes mécaniques)",
+        modalNdaCheck: "Je souhaite bénéficier de la garantie de confidentialité AF3D (protection IP & fichiers).",
+        modalCancel: "Annuler",
+        modalSubmit: "Envoyer ma demande à AF3D",
+        confirmTitle: "Demande transmise avec succès !",
+        confirmDesc: "Merci. Un ingénieur Advanced Fab 3D analyse votre besoin et vous recontactera rapidement avec une proposition technique et un devis.",
+        confirmBtn: "Fermer"
+      },
+      en: {
+        brandTagline: "Additive manufacturing expertise",
+        navAbout: "About Us",
+        navSectors: "Sectors",
+        navServices: "Services",
+        navMachines: "Machine Fleet",
+        navMaterials: "Materials",
+        navMethod: "Process",
+        navQuote: "Request a Quote",
+        heroBadge: "MOROCCAN STARTUP — NEW GENERATION",
+        heroTitle: "Additive manufacturing accelerating industry",
+        heroSubtitle: "Design. Print. Deliver. Faster, more precise. We rapidly turn your ideas into high-performance technical parts powered by expert engineers and next-generation industrial equipment.",
+        heroCtaPrimary: "Start a Project / 3D Quote",
+        heroCtaSecondary: "Explore Capabilities",
+        heroStat1: "From idea to finished part",
+        heroStat2: "Guaranteed confidentiality",
+        heroStat3: "Agile local production",
+        telemetryWorkflow: "INTEGRATED WORKFLOW",
+        telemetryMotto: "Design. Print. Deliver.",
+        telemetryPartners: "TECH PARTNERS",
+        aboutKicker: "WHO WE ARE",
+        aboutTitle: "The new generation of 3D printing fabs",
+        aboutDesc: "Advanced Fab 3D (AF3D) is the specialist in professional 3D manufacturing. We rapidly transform your concepts into high-performance technical parts with expert engineers, cutting-edge equipment, and global technology partners.",
+        visionLabel: "OUR VISION",
+        visionText: "Making additive manufacturing a primary competitiveness lever for Moroccan industry, closely aligned with every client's technical requirements.",
+        dnaLabel: "OUR DNA // 4 PILLARS",
+        dnaQuote: "« Closer to your needs, more attentive to your expectations. »",
+        dna1Title: "Innovation",
+        dna1Desc: "Next-generation additive manufacturing technologies, 3D metrology scanning, and digital engineering methods.",
+        dna2Title: "Expertise",
+        dna2Desc: "High-level engineering capabilities in DfAM design, material selection, and mechanical optimization.",
+        dna3Title: "Responsiveness",
+        dna3Desc: "Short lead times and agile local production in Morocco to accelerate your R&D and production cycles.",
+        dna4Title: "Premium Service",
+        dna4Desc: "A dedicated engineering contact supports you from initial feasibility study through quality control and delivery.",
+        sectorsKicker: "PRIORITY SECTORS",
+        sectorsTitle: "Three sectors, one uncompromising standard",
+        sectorsSubtitle: "Manufacturers, OEMs, clinics, or engineering offices: certified additive solutions engineered for demanding environments.",
+        sectorAutoTab: "Automotive",
+        sectorAeroTab: "Aerospace",
+        sectorMedTab: "Medical",
+        offerKicker: "OUR SERVICES",
+        offerTitle: "From idea to finished part",
+        offerSubtitle: "End-to-end engineering support covering digital design, industrial 3D printing, precision scanning, and team training.",
+        srv1Title: "Design & DfAM",
+        srv1Desc: "3D CAD modeling and design optimization tailored specifically to unlock the full performance of additive manufacturing.",
+        srv2Title: "Rapid Prototyping",
+        srv2Desc: "Test, validate, and iterate mechanical and ergonomic designs within days rather than weeks.",
+        srv3Title: "Functional Parts",
+        srv3Desc: "On-demand production of small batches and unique end-use parts in engineering polymers and fiber composites.",
+        srv4Title: "Tooling & Jigs",
+        srv4Desc: "Custom drilling jigs, inspection fixtures, and assembly line tooling to boost shop-floor efficiency.",
+        srv5Title: "3D Scanning & Reverse Engineering",
+        srv5Desc: "High-precision digitization using the Sermoon S1 scanner to reproduce, inspect, or upgrade legacy parts.",
+        srv6Title: "Consulting & Training",
+        srv6Desc: "Strategic consulting and hands-on training to integrate additive manufacturing directly inside your organization.",
+        machinesKicker: "OUR MACHINE FLEET",
+        machinesTitle: "Professional equipment, from 3D digitization to production",
+        partnersLabel: "Our international partners:",
+        mac1Desc: "Large-format industrial 3D printer engineered for sizeable technical components and high dimensional accuracy.",
+        mac1Tag1: "Large build volume",
+        mac1Tag2: "High precision",
+        mac2Desc: "High-speed, multi-material 3D printing system ideal for rapid prototyping, complex geometries, and small batches.",
+        mac2Tag1: "High speed",
+        mac2Tag2: "Small series",
+        mac3Desc: "High-precision 3D optical scanner dedicated to reverse engineering, legacy part replication, and quality inspection.",
+        mac3Tag1: "High-res scanning",
+        mac3Tag2: "Reverse engineering",
+        materialsKicker: "POLYMERS & COMPOSITES",
+        materialsTitle: "Engineering materials matched to every constraint",
+        materialsSubtitle: "Select a material below to inspect its mechanical, thermal, and industrial application profile.",
+        methodKicker: "OUR METHOD",
+        methodTitle: "A streamlined 4-step engineering workflow",
+        step1Title: "Brief",
+        step1Desc: "Review of your technical specifications, CAD file (STEP/STL), or physical part for 3D scanning.",
+        step2Title: "Study & Quote",
+        step2Desc: "DfAM feasibility check, optimal material selection, and detailed quotation within 24 hours.",
+        step3Title: "Manufacturing",
+        step3Desc: "Industrial additive production on our calibrated fleet with strict parameter monitoring.",
+        step4Title: "QC & Delivery",
+        step4Desc: "Thorough dimensional inspection and fast delivery across Morocco.",
+        ndaBadge: "QUALITY & IP SECURITY COMMITMENT",
+        ndaTitle: "Controlled quality. Met deadlines. Guaranteed confidentiality.",
+        ndaDesc: "Your CAD files and industrial innovations remain strictly protected under NDA at every stage of production.",
+        ndaCta: "Submit a Confidential File",
+        footerKicker: "LET'S DISCUSS YOUR PROJECT",
+        footerTitle: "Have a project or a part to manufacture?",
+        footerDesc: "Send us your 3D file or technical brief: our dedicated engineering team will respond promptly with a solution and quote.",
+        footerCtaBtn: "Request an Online Quote",
+        footerBio: "New-generation Moroccan startup specializing in industrial additive manufacturing, rapid prototyping, and 3D reverse engineering.",
+        footerContactHeader: "DIRECT CONTACT",
+        footerNetworkHeader: "PARTNER NETWORK",
+        footerNetworkText: "Manufacturer, OEM, clinic, or engineering firm? Join our industrial partner network in Morocco.",
+        qrCaption: "Scan to explore our projects",
+        footerRights: "All rights reserved.",
+        footerMotto: "Design. Print. Deliver. Faster, more precise.",
+        modalTitle: "Request a 3D Study & Quote",
+        modalFileLabel: "1. 3D CAD FILE (STL, STEP, OBJ) OR TECHNICAL BRIEF",
+        modalDropText: "Click to upload a file (.STL, .STEP, .OBJ, .PDF)",
+        modalDropSub: "Encrypted transfer • Protected by Non-Disclosure Agreement (NDA)",
+        modalSectorLabel: "Industry Sector",
+        modalMaterialLabel: "Preferred Material",
+        modalNameLabel: "Full Name & Company *",
+        modalEmailLabel: "Work Email *",
+        modalNotesLabel: "Project details (quantity, lead time, mechanical requirements)",
+        modalNdaCheck: "I want full AF3D confidentiality protection (IP & CAD file security).",
+        modalCancel: "Cancel",
+        modalSubmit: "Send Request to AF3D",
+        confirmTitle: "Request Successfully Submitted!",
+        confirmDesc: "Thank you. An Advanced Fab 3D engineer is reviewing your brief and will reach out shortly with a technical solution and quote.",
+        confirmBtn: "Close"
+      }
+    };
+
+    // Priority Sectors Rich Data (FR & EN)
+    const sectorsData = {
+      auto: {
+        code: "SECTOR // 01 — AUTOMOTIVE",
+        title: { fr: "Automobile & Équipementiers", en: "Automotive & Tier-1 Suppliers" },
+        lead: {
+          fr: "Accélérez vos cycles de validation et réduisez les temps d'arrêt sur vos lignes d'assemblage grâce à l'outillage sur mesure et aux pièces techniques à la demande.",
+          en: "Accelerate validation cycles and eliminate assembly line downtime with custom shop-floor tooling and on-demand technical components."
+        },
+        bullets: {
+          fr: [
+            "Prototypes fonctionnels pour valider rapidement vos conceptions mécaniques",
+            "Gabarits de perçage, montages de contrôle et outillages ergonomiques de ligne",
+            "Pièces de rechange critiques et petites séries à la demande sans coût d'outillage"
+          ],
+          en: [
+            "Functional prototypes to rapidly validate mechanical and assembly designs",
+            "Custom drilling jigs, inspection fixtures, and ergonomic production line tooling",
+            "On-demand spare parts and low-volume series with zero molding investment"
+          ]
+        },
+        materials: "ABS/ASA • Composites fibrés • Nylon (PA) • TPU",
+        cta: { fr: "Démarrer un projet Automobile", en: "Start an Automotive Project" }
+      },
+      aero: {
+        code: "SECTOR // 02 — AEROSPACE",
+        title: { fr: "Aéronautique & Haute Précision", en: "Aerospace & High Precision" },
+        lead: {
+          fr: "Allégez vos structures tout en maintenant des performances mécaniques élevées grâce à l'optimisation topologique et aux polymères haute résistance.",
+          en: "Reduce structural weight while preserving mechanical integrity through topological optimization and high-strength engineering polymers."
+        },
+        bullets: {
+          fr: [
+            "Pièces allégées grâce à l'optimisation topologique et la conception générative",
+            "Outillages et gabarits d'assemblage complexes à haute répétabilité",
+            "Prototypes de validation aérodynamique et maquettes techniques détaillées"
+          ],
+          en: [
+            "Lightweight components achieved through topological optimization and DfAM",
+            "High-repeatability assembly jigs, masks, and precision maintenance tooling",
+            "Validation prototypes and high-detail technical engineering mockups"
+          ]
+        },
+        materials: "Composites fibrés • PC (Polycarbonate) • Nylon (PA) • ASA",
+        cta: { fr: "Démarrer un projet Aéronautique", en: "Start an Aerospace Project" }
+      },
+      med: {
+        code: "SECTOR // 03 — MEDICAL",
+        title: { fr: "Médical & Dispositifs Sur Mesure", en: "Medical & Custom Devices" },
+        lead: {
+          fr: "En collaboration étroite avec les chirurgiens, cliniques et professionnels de santé, nous concevons des solutions anatomiques personnalisées.",
+          en: "Working closely with surgeons, clinics, and healthcare specialists, we engineer patient-specific anatomical models and custom medical prototypes."
+        },
+        bullets: {
+          fr: [
+            "Modèles anatomiques haute fidélité pour la planification pré-opératoire et chirurgicale",
+            "Prototypes de dispositifs médicaux ergonomiques et guides sur mesure",
+            "Orthèses personnalisées légères, aérées et parfaitement adaptées au patient"
+          ],
+          en: [
+            "High-fidelity anatomical models for pre-operative surgical planning",
+            "Custom medical device prototypes and patient-specific surgical guides",
+            "Lightweight, breathable custom orthoses tailored to individual anatomy"
+          ]
+        },
+        materials: "Résines techniques • TPU • Nylon (PA) • PLA",
+        cta: { fr: "Démarrer un projet Médical", en: "Start a Medical Project" }
+      }
+    };
+
+    // 8 Industrial Materials Data (FR & EN)
+    const materialsData = [
+      {
+        name: "PLA",
+        tag: { fr: "Prototypage visuel & maquettes", en: "Visual prototyping & mockups" },
+        strength: 65,
+        heat: 45,
+        flex: 25,
+        desc: {
+          fr: "Idéal pour les maquettes architecturales, modèles anatomiques et prototypes conceptuels rapides avec un excellent rendu de surface.",
+          en: "Ideal for architectural mockups, anatomical models, and fast conceptual prototypes with crisp surface finish."
+        },
+        apps: { fr: "Maquettes, validation visuelle, modèles anatomiques", en: "Mockups, visual validation, anatomical models" }
+      },
+      {
+        name: "PETG",
+        tag: { fr: "Résistance chimique & polyvalence", en: "Chemical resistance & versatility" },
+        strength: 75,
+        heat: 65,
+        flex: 45,
+        desc: {
+          fr: "Excellent compromis entre résistance mécanique, durabilité chimique et facilité d'impression pour pièces fonctionnelles courantes.",
+          en: "Balanced mechanical strength, chemical resistance, and durability for everyday functional components."
+        },
+        apps: { fr: "Boîtiers, carters de protection, pièces mécaniques légères", en: "Enclosures, protective guards, light mechanical parts" }
+      },
+      {
+        name: "ABS / ASA",
+        tag: { fr: "Robustesse & résistance UV/thermique", en: "Toughness & UV/thermal resistance" },
+        strength: 82,
+        heat: 82,
+        flex: 40,
+        desc: {
+          fr: "Polymères industriels de référence offrant une haute résistance aux chocs, à la chaleur et aux rayons UV (ASA) pour usage extérieur.",
+          en: "Industry-standard thermoplastics delivering high impact strength, thermal stability, and UV resistance (ASA) for outdoor use."
+        },
+        apps: { fr: "Pièces automobiles, capots extérieurs, gabarits d'atelier", en: "Automotive parts, exterior housings, shop-floor jigs" }
+      },
+      {
+        name: "Nylon (PA)",
+        tag: { fr: "Friction, usure & fatigue mécanique", en: "Friction, wear & mechanical fatigue" },
+        strength: 88,
+        heat: 85,
+        flex: 60,
+        desc: {
+          fr: "Très haute résistance à l'abrasion et aux contraintes répétées. Parfait pour les engrenages, charnières et pièces en mouvement.",
+          en: "Superior abrasion and fatigue resistance. Well-suited for gears, snap-fits, hinges, and moving mechanical parts."
+        },
+        apps: { fr: "Engrenages, guides de friction, pièces de rechange industrielles", en: "Gears, wear guides, industrial replacement parts" }
+      },
+      {
+        name: "TPU",
+        tag: { fr: "Élastomère flexible & amorti", en: "Flexible elastomer & shock absorption" },
+        strength: 70,
+        heat: 60,
+        flex: 98,
+        desc: {
+          fr: "Matériau souple résistant aux huiles et à l'abrasion, conçu pour l'absorption des chocs, joints d'étanchéité et protections.",
+          en: "Oil- and abrasion-resistant elastomer engineered for vibration damping, custom seals, and protective bumpers."
+        },
+        apps: { fr: "Joints, soufflets, amortisseurs, orthèses souples", en: "Seals, bellows, shock absorbers, flexible orthoses" }
+      },
+      {
+        name: "PC",
+        tag: { fr: "Polycarbonate haute tenue thermique", en: "High-heat Polycarbonate" },
+        strength: 92,
+        heat: 94,
+        flex: 35,
+        desc: {
+          fr: "Résistance exceptionnelle aux chocs et aux températures élevées pour les environnements industriels sévères.",
+          en: "Exceptional impact toughness and elevated heat deflection temperature for harsh industrial environments."
+        },
+        apps: { fr: "Composants électriques, pièces sous capot, outillages chauds", en: "Electrical housings, under-hood parts, high-temp fixtures" }
+      },
+      {
+        name: "Composites fibrés",
+        tag: { fr: "Carbone / Verre — Rigidité extrême", en: "Carbon / Glass Fiber — Extreme stiffness" },
+        strength: 98,
+        heat: 95,
+        flex: 15,
+        desc: {
+          fr: "Matrices polymères renforcées de fibres de carbone ou de verre offrant un rapport rigidité/poids rivalisant avec l'aluminium.",
+          en: "Carbon- or glass-fiber reinforced polymers delivering a stiffness-to-weight ratio rivaling machined aluminum."
+        },
+        apps: { fr: "Outillages aéronautiques, gabarits de contrôle, pièces structurelles", en: "Aerospace tooling, inspection jigs, structural brackets" }
+      },
+      {
+        name: "Résines techniques",
+        tag: { fr: "Haute précision & état de surface lisse", en: "Ultra-high detail & smooth finish" },
+        strength: 80,
+        heat: 78,
+        flex: 30,
+        desc: {
+          fr: "Photopolymères haute résolution permettant de reproduire les détails les plus fins avec une précision micrométrique.",
+          en: "High-resolution photopolymers capturing intricate micro-features with smooth, injection-molded-like surface quality."
+        },
+        apps: { fr: "Modèles médicaux, micro-connecteurs, moules de précision", en: "Medical models, micro-connectors, precision master patterns" }
+      }
+    ];
+
+    // Switch Language Function
+    function setLanguage(lang) {
+      currentLang = lang;
+      document.documentElement.lang = lang;
+
+      // Update toggle pill styling
+      const btnFr = document.getElementById('btn-lang-fr');
+      const btnEn = document.getElementById('btn-lang-en');
+      if (lang === 'fr') {
+        btnFr.className = "px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all bg-afNavy text-white shadow-sm cursor-pointer";
+        btnEn.className = "px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all text-slate-600 hover:text-afNavy cursor-pointer";
+      } else {
+        btnEn.className = "px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all bg-afNavy text-white shadow-sm cursor-pointer";
+        btnFr.className = "px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all text-slate-600 hover:text-afNavy cursor-pointer";
+      }
+
+      // Translate all static data-i18n attributes
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (translations[lang] && translations[lang][key]) {
+          el.textContent = translations[lang][key];
+        }
+      });
+
+      // Re-render dynamic interactive blocks
+      renderSectorPanel();
+      renderMaterials();
+    }
+
+    // Select & Render Sector Panel
+    function selectSector(sectorKey) {
+      currentSector = sectorKey;
+      // Update tab button styles
+      ['auto', 'aero', 'med'].forEach(key => {
+        const tab = document.getElementById(`tab-${key}`);
+        if (key === sectorKey) {
+          tab.className = "sector-tab active px-6 py-3.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2.5 bg-afNavy text-white shadow-md cursor-pointer";
+        } else {
+          tab.className = "sector-tab px-6 py-3.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2.5 bg-white text-slate-700 border border-slate-200 hover:border-afCyan cursor-pointer";
+        }
+      });
+      renderSectorPanel();
+    }
+
+    function renderSectorPanel() {
+      const data = sectorsData[currentSector];
+      const l = currentLang;
+      const panel = document.getElementById('sector-panel');
+      const matLabel = l === 'fr' ? 'MATÉRIAUX RECOMMANDÉS' : 'RECOMMENDED MATERIALS';
+
+      panel.innerHTML = `
+        <div class="grid grid-cols-1 lg:grid-cols-12">
+          <div class="lg:col-span-8 p-8 sm:p-10 space-y-6">
+            <div class="font-mono text-xs font-bold tracking-widest text-afCyanDark">${data.code}</div>
+            <h3 class="text-2xl sm:text-3xl font-extrabold text-afNavy">${data.title[l]}</h3>
+            <p class="text-slate-600 text-base leading-relaxed">${data.lead[l]}</p>
+            <ul class="space-y-3 pt-2">
+              ${data.bullets[l].map(item => `
+                <li class="flex items-start gap-3 text-sm sm:text-base text-slate-700">
+                  <span class="mt-1 w-5 h-5 rounded-full bg-afCyan/15 text-afCyanDark flex items-center justify-center shrink-0 font-bold text-xs">✓</span>
+                  <span>${item}</span>
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+          <div class="lg:col-span-4 bg-afNavy text-white p-8 sm:p-10 flex flex-col justify-between border-t lg:border-t-0 lg:border-l border-slate-200">
+            <div class="space-y-4">
+              <div class="font-mono text-xs uppercase tracking-widest text-afCyan">${matLabel}</div>
+              <p class="font-mono text-sm text-slate-200 leading-relaxed bg-white/5 p-4 rounded-xl border border-white/10">
+                ${data.materials}
+              </p>
+            </div>
+            <div class="pt-8">
+              <button onclick="openQuoteModal('${data.title[l]}')" class="w-full bg-afCyan hover:bg-sky-400 text-afNavy font-bold px-5 py-3.5 rounded-xl transition-all cursor-pointer text-sm shadow-lg">
+                ${data.cta[l]} →
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Render Interactive Materials Explorer
+    function selectMaterial(idx) {
+      selectedMaterialIndex = idx;
+      renderMaterials();
+    }
+
+    function renderMaterials() {
+      const l = currentLang;
+      const grid = document.getElementById('materials-grid');
+      const detailBox = document.getElementById('material-detail-box');
+
+      grid.innerHTML = materialsData.map((mat, idx) => {
+        const isSelected = idx === selectedMaterialIndex;
+        return `
+          <button onclick="selectMaterial(${idx})" class="text-left p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer ${
+            isSelected
+              ? 'bg-afNavy text-white border-afNavy shadow-lg ring-2 ring-afCyan/50'
+              : 'bg-white text-afNavy border-slate-200 hover:border-afCyanDark'
+          }">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="font-mono font-bold text-sm sm:text-base">${mat.name}</span>
+              <span class="w-2 h-2 rounded-full ${isSelected ? 'bg-afCyan' : 'bg-slate-300'}"></span>
+            </div>
+            <p class="text-xs ${isSelected ? 'text-slate-300' : 'text-slate-500'} line-clamp-2">${mat.tag[l]}</p>
+          </button>
+        `;
+      }).join('');
+
+      const active = materialsData[selectedMaterialIndex];
+      const lblStrength = l === 'fr' ? 'Résistance mécanique' : 'Mechanical Strength';
+      const lblHeat = l === 'fr' ? 'Tenue thermique' : 'Thermal Resistance';
+      const lblFlex = l === 'fr' ? 'Flexibilité' : 'Flexibility';
+      const lblApps = l === 'fr' ? 'APPLICATIONS TYPES' : 'TYPICAL APPLICATIONS';
+
+      detailBox.innerHTML = `
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div class="lg:col-span-7 space-y-3">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-afCyan/10 text-afCyanDark font-mono text-xs font-bold">
+              ${active.name} // ${active.tag[l]}
+            </div>
+            <p class="text-slate-700 text-base leading-relaxed">${active.desc[l]}</p>
+            <div class="pt-2">
+              <span class="font-mono text-xs font-bold text-slate-400 uppercase block mb-1">${lblApps}</span>
+              <span class="text-sm font-semibold text-afNavy">${active.apps[l]}</span>
+            </div>
+          </div>
+          <div class="lg:col-span-5 space-y-3.5 bg-afLight p-5 rounded-xl border border-slate-200/80">
+            <div>
+              <div class="flex justify-between text-xs font-mono font-semibold mb-1">
+                <span>${lblStrength}</span><span>${active.strength}%</span>
+              </div>
+              <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div class="h-full bg-afNavy rounded-full" style="width: ${active.strength}%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs font-mono font-semibold mb-1">
+                <span>${lblHeat}</span><span>${active.heat}%</span>
+              </div>
+              <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div class="h-full bg-afCyanDark rounded-full" style="width: ${active.heat}%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs font-mono font-semibold mb-1">
+                <span>${lblFlex}</span><span>${active.flex}%</span>
+              </div>
+              <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div class="h-full bg-afCyan rounded-full" style="width: ${active.flex}%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Mobile Menu Toggle
+    function toggleMobileMenu() {
+      const menu = document.getElementById('mobile-menu');
+      menu.classList.toggle('hidden');
+    }
+
+    // Quote Modal Controls
+    function openQuoteModal(preselectedSector) {
+      const modal = document.getElementById('quote-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      if (preselectedSector) {
+        const select = document.getElementById('modal-sector');
+        if (preselectedSector.toLowerCase().includes('auto')) select.value = 'Automobile';
+        else if (preselectedSector.toLowerCase().includes('aéro') || preselectedSector.toLowerCase().includes('aero')) select.value = 'Aéronautique';
+        else if (preselectedSector.toLowerCase().includes('méd') || preselectedSector.toLowerCase().includes('med')) select.value = 'Médical';
+      }
+    }
+
+    function closeQuoteModal() {
+      const modal = document.getElementById('quote-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function handleFileSelect(input) {
+      const statusText = document.getElementById('file-status-text');
+      if (input.files && input.files[0]) {
+        const fileName = input.files[0].name;
+        statusText.textContent = `✓ ${fileName}`;
+        statusText.classList.add('text-afCyanDark');
+      }
+    }
+
+    function handleQuoteSubmit(e) {
+      e.preventDefault();
+      document.getElementById('quote-form').classList.add('hidden');
+      document.getElementById('quote-confirmation').classList.remove('hidden');
+    }
+
+    function resetAndCloseModal() {
+      document.getElementById('quote-form').reset();
+      document.getElementById('quote-form').classList.remove('hidden');
+      document.getElementById('quote-confirmation').classList.add('hidden');
+      closeQuoteModal();
+    }
+
+    // Initialize Dynamic Sections on Load
+    window.addEventListener('DOMContentLoaded', () => {
+      renderSectorPanel();
+      renderMaterials();
+    });
+  </script>
+</body>
+</html>
