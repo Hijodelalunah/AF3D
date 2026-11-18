@@ -1,0 +1,1867 @@
+<!DOCTYPE html>
+<html lang="fr" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulateur d'Impression 3D | Advanced Fab 3D (AF3D)</title>
+  <meta name="description" content="Simulateur de coût et d'encombrement d'impression 3D industrielle Advanced Fab 3D (AF3D) - Volume utile 360 x 360 x 610 mm." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            afNavy: '#0B132B',
+            afSlate: '#1C2541',
+            afBlue: '#1E40AF',
+            afCyan: '#0EA5E9',
+            afCyanDark: '#0284C7',
+            afLight: '#F8FAFC'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .tech-grid {
+      background-image:
+        linear-gradient(to right, rgba(14, 165, 233, 0.08) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(14, 165, 233, 0.08) 1px, transparent 1px);
+      background-size: 36px 36px;
+    }
+    .nav-link {
+      position: relative;
+      padding-top: 0.35rem;
+      padding-bottom: 0.35rem;
+    }
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #0EA5E9, #2563EB);
+      border-radius: 999px;
+      transition: width 0.25s ease;
+    }
+    .nav-link:hover::after,
+    .nav-link.active::after {
+      width: 100%;
+    }
+    .nav-link.active {
+      color: #0B132B;
+    }
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 6px;
+      border-radius: 999px;
+      background: #CBD5E1;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 18px;
+      width: 18px;
+      border-radius: 50%;
+      background: #0284C7;
+      border: 2px solid #FFFFFF;
+      box-shadow: 0 2px 6px rgba(11, 19, 43, 0.3);
+      margin-top: -6px;
+    }
+    #viewer-canvas-container canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+      outline: none;
+    }
+  </style>
+</head>
+<body class="bg-afLight text-slate-900 font-sans antialiased selection:bg-afCyan selection:text-white">
+
+  <!-- ==================== STICKY NAVIGATION HEADER ==================== -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-sm transition-all">
+    <div class="w-full px-4 sm:px-6 lg:px-10">
+      <div class="flex items-center justify-between h-20 gap-4">
+        <!-- Official AF3D Symbol + Exact Typographic Lockup -->
+        <a href="advanced_fab_3d_af3d_corporate_website.html" class="inline-flex items-center gap-3.5 shrink-0 focus:outline-none group" aria-label="Advanced Fab 3D (AF3D)">
+          <img
+            src="AF3D_symbol_HD_transparent.png"
+            alt="AF3D Symbol"
+            onerror="this.style.display='none'"
+            class="h-12 sm:h-14 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+          />
+          <div class="flex flex-col justify-center">
+            <div class="flex items-center gap-2.5">
+              <div class="leading-[0.95] font-extrabold tracking-tight text-[19px] sm:text-[22px] text-[#1D1D1F]">
+                <span class="block">Advanced</span>
+                <span class="block">FAB <span class="text-[#3245A8]">3D</span></span>
+              </div>
+              <span class="h-8 w-[1.5px] bg-[#1D1D1F]/80"></span>
+              <svg viewBox="0 0 112 28" class="h-4 sm:h-5 w-auto fill-none stroke-[#1D1D1F]" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M2 24 L13 4 L24 24" />
+                <path d="M32 24 V4 H50 M32 14 H47" />
+                <path d="M58 4 H74 C77 4 79 6 79 9 C79 12 77 14 74 14 H60 M74 14 C77 14 79 16 79 19 C79 22 77 24 74 24 H58" />
+                <path d="M88 4 H98 C105 4 110 8.5 110 14 C110 19.5 105 24 98 24 H88 Z" />
+              </svg>
+            </div>
+            <span class="mt-1 text-[7.5px] sm:text-[8.5px] font-medium tracking-[0.23em] uppercase text-[#1D1D1F]/85 whitespace-nowrap" data-i18n="brandTagline">
+              L’EXPERTISE EN FABRICATION ADDITIVE
+            </span>
+          </div>
+        </a>
+
+        <!-- Desktop Navigation Links -->
+        <nav class="hidden xl:flex items-center gap-6 text-[13px] font-semibold tracking-wide text-slate-700">
+          <a href="advanced_fab_3d_af3d_corporate_website.html#about" class="nav-link hover:text-afNavy transition-colors whitespace-nowrap" data-i18n="navAbout">Qui sommes-nous</a>
+          <a href="advanced_fab_3d_af3d_corporate_website.html#sectors" class="nav-link hover:text-afNavy transition-colors whitespace-nowrap" data-i18n="navSectors">Secteurs</a>
+          <a href="advanced_fab_3d_af3d_corporate_website.html#services" class="nav-link hover:text-afNavy transition-colors whitespace-nowrap" data-i18n="navServices">Services</a>
+          <a href="advanced_fab_3d_af3d_corporate_website.html#machines" class="nav-link hover:text-afNavy transition-colors whitespace-nowrap" data-i18n="navMachines">Équipements</a>
+          <a href="advanced_fab_3d_af3d_corporate_website.html#materials" class="nav-link hover:text-afNavy transition-colors whitespace-nowrap" data-i18n="navMaterials">Matériaux</a>
+          <a href="#simulator-top" class="nav-link active text-afCyanDark font-bold whitespace-nowrap flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-afCyan"></span>
+            <span data-i18n="navSimulator">Simulateur 3D</span>
+          </a>
+        </nav>
+
+        <!-- Right Controls: FR/EN Switcher + CTA + Mobile Menu -->
+        <div class="flex items-center gap-3 shrink-0">
+          <div class="inline-flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200" role="group" aria-label="Language Switcher">
+            <button id="btn-lang-fr" onclick="setLanguage('fr')" class="px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all bg-afNavy text-white shadow-sm cursor-pointer">
+              FR
+            </button>
+            <button id="btn-lang-en" onclick="setLanguage('en')" class="px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all text-slate-600 hover:text-afNavy cursor-pointer">
+              EN
+            </button>
+          </div>
+
+          <button onclick="openSimulatorQuoteModal()" class="hidden sm:inline-flex items-center gap-2 bg-afCyanDark hover:bg-afNavy text-white text-sm font-bold px-4 py-2.5 rounded-xl shadow-md shadow-afCyanDark/15 transition-all cursor-pointer whitespace-nowrap">
+            <span data-i18n="navQuote">Valider mon devis</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+          </button>
+
+          <button id="mobile-menu-btn" onclick="toggleMobileMenu()" class="xl:hidden p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-afNavy hover:bg-slate-100 focus:outline-none transition-colors cursor-pointer" aria-label="Menu">
+            <svg id="menu-icon-open" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            <svg id="menu-icon-close" class="w-5 h-5 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Drawer -->
+    <div id="mobile-menu" class="hidden xl:hidden bg-white/95 backdrop-blur-lg border-b border-slate-200 px-4 pt-3 pb-6 space-y-1.5 shadow-xl">
+      <a href="advanced_fab_3d_af3d_corporate_website.html#about" class="flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100" data-i18n="navAbout">Qui sommes-nous</a>
+      <a href="advanced_fab_3d_af3d_corporate_website.html#sectors" class="flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100" data-i18n="navSectors">Secteurs</a>
+      <a href="advanced_fab_3d_af3d_corporate_website.html#services" class="flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100" data-i18n="navServices">Services</a>
+      <a href="advanced_fab_3d_af3d_corporate_website.html#machines" class="flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100" data-i18n="navMachines">Équipements</a>
+      <a href="advanced_fab_3d_af3d_corporate_website.html#materials" class="flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100" data-i18n="navMaterials">Matériaux</a>
+      <a href="#simulator-top" onclick="toggleMobileMenu()" class="flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold text-afCyanDark bg-sky-50" data-i18n="navSimulator">Simulateur 3D</a>
+      <div class="pt-3 mt-2 border-t border-slate-200">
+        <button onclick="toggleMobileMenu(); openSimulatorQuoteModal();" class="w-full flex items-center justify-center gap-2 bg-afCyanDark hover:bg-afNavy text-white text-sm font-bold px-4 py-3.5 rounded-xl shadow-lg transition-all cursor-pointer">
+          <span data-i18n="navQuote">Valider mon devis</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== SIMULATOR HERO BANNER (FULL WIDTH) ==================== -->
+  <section id="simulator-top" class="relative overflow-hidden bg-afNavy text-white tech-grid border-b border-white/10">
+    <div class="absolute -top-20 right-10 w-80 h-80 bg-afCyan/20 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="w-full px-4 sm:px-6 lg:px-10 py-8 lg:py-10 relative z-10">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div class="space-y-2.5 max-w-4xl">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-mono font-semibold text-sky-300">
+            <span class="w-2 h-2 rounded-full bg-afCyan animate-pulse"></span>
+            <span id="hero-chamber-badge">CHIFFRAGE INSTANTANÉ · EPITUM JL (360 × 360 × 610 MM)</span>
+          </div>
+          <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight" data-i18n="simTitle">
+            Simulateur de Coût & Volume d’Impression 3D
+          </h1>
+          <p class="text-slate-300 text-sm sm:text-base leading-relaxed" data-i18n="simSubtitle">
+            Importez votre modèle CAO (.STL ou .OBJ), sélectionnez l’imprimante AF3D adaptée (Epitum JL, Creality K2 Plus, Elegoo Centauri Carbon 2, Creality V3 Plus) et configurez vos paramètres pour obtenir une estimation immédiate.
+          </p>
+        </div>
+
+        <div class="rounded-2xl bg-afSlate/90 border border-sky-400/25 px-5 py-4 shrink-0 backdrop-blur-sm">
+          <div class="flex items-center justify-between gap-4 border-b border-white/10 pb-2 mb-2">
+            <span class="text-[11px] font-mono text-slate-400" data-i18n="chamberLabel">CHAMBRE MACHINE ACTIVE</span>
+            <span id="hero-machine-tag" class="text-[11px] font-mono text-emerald-400 font-bold">EPITUM JL</span>
+          </div>
+          <div class="flex items-baseline gap-2 font-mono">
+            <span id="hero-max-x" class="text-2xl font-extrabold text-white">360</span>
+            <span class="text-slate-400 text-sm">×</span>
+            <span id="hero-max-y" class="text-2xl font-extrabold text-white">360</span>
+            <span class="text-slate-400 text-sm">×</span>
+            <span id="hero-max-z" class="text-2xl font-extrabold text-sky-400">610</span>
+            <span class="text-xs text-slate-300 ml-1">mm (X·Y·Z)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MAIN SIMULATOR WORKSPACE (FULL WIDTH) ==================== -->
+  <main class="w-full px-4 sm:px-6 lg:px-10 py-8 lg:py-10 space-y-6">
+    <!-- Custom Notification Banner -->
+    <div id="sim-toast" class="hidden rounded-2xl bg-afNavy text-white px-5 py-3.5 shadow-lg border border-sky-400/30 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3 text-sm">
+        <span class="w-2.5 h-2.5 rounded-full bg-afCyan shrink-0"></span>
+        <span id="sim-toast-msg"></span>
+      </div>
+      <button onclick="hideToast()" class="text-slate-400 hover:text-white text-xs font-mono cursor-pointer">✕</button>
+    </div>
+
+    <!-- 1. FULL-WIDTH FILE UPLOAD & PRESET PARTS CARD -->
+    <div class="w-full rounded-2xl bg-white border border-slate-200 p-5 sm:p-6 shadow-sm">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+        <div>
+          <h2 class="text-base font-extrabold text-afNavy flex items-center gap-2">
+            <span class="w-6 h-6 rounded-lg bg-afNavy text-white font-mono text-xs flex items-center justify-center">1</span>
+            <span data-i18n="stepImportTitle">Importer votre fichier 3D (.STL / .OBJ)</span>
+          </h2>
+          <p class="text-xs text-slate-500 mt-0.5" data-i18n="stepImportSub">Analyse géométrique locale dans votre navigateur · Confidentialité totale (NDA)</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-[11px] font-mono text-slate-400" data-i18n="presetLabel">Pièces démo :</span>
+          <button onclick="loadPresetPart('bracket')" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-afNavy hover:text-white text-slate-700 transition-colors cursor-pointer" data-i18n="preset1">Support Aéro</button>
+          <button onclick="loadPresetPart('housing')" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-afNavy hover:text-white text-slate-700 transition-colors cursor-pointer" data-i18n="preset2">Boîtier Auto</button>
+          <button onclick="loadPresetPart('insole')" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-afNavy hover:text-white text-slate-700 transition-colors cursor-pointer" data-i18n="preset3">Orthèse / Semelle</button>
+        </div>
+      </div>
+
+      <!-- Drag & Drop Zone -->
+      <div id="drop-zone" class="relative rounded-xl border-2 border-dashed border-slate-300 hover:border-afCyanDark bg-afLight/70 hover:bg-sky-50/40 transition-all p-5 text-center cursor-pointer">
+        <input id="cad-file-input" type="file" accept=".stl,.obj" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleCADFileSelect(event)" />
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pointer-events-none">
+          <div class="w-12 h-12 rounded-xl bg-white border border-slate-200 shadow-sm text-afCyanDark flex items-center justify-center shrink-0">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+          </div>
+          <div class="text-center sm:text-left">
+            <p id="loaded-filename" class="text-sm font-bold text-afNavy" data-i18n="dropTitle">Glissez-déposez votre fichier .STL ou .OBJ ici, ou cliquez pour parcourir</p>
+            <p class="text-xs text-slate-500 mt-0.5" data-i18n="dropHint">Unités détectées automatiquement en millimètres (mm) · Volume max : 360 × 360 × 610 mm</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. FULL-WIDTH 3D VIEWER CARD (100% CONTAINER WIDTH) -->
+    <div class="w-full rounded-2xl bg-afNavy border border-slate-800 shadow-xl overflow-hidden">
+      <!-- Viewer Top Status Bar -->
+      <div class="px-5 py-3.5 bg-afSlate/95 border-b border-white/10 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+          <span id="viewer-machine-label" class="text-xs font-mono font-bold text-sky-400">AF3D // EPITUM JL</span>
+          <span id="viewer-dims-label" class="text-xs font-mono text-slate-400">(360 × 360 × 610 mm)</span>
+        </div>
+
+        <!-- Live Fit / Envelope Status Badge -->
+        <div id="fit-status-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span id="fit-status-text">COMPATIBLE 360×360×610 MM</span>
+        </div>
+      </div>
+
+      <!-- 3D WebGL Viewport Container -->
+      <div class="relative w-full h-[460px] sm:h-[540px] bg-[#0B132B]" id="viewer-canvas-container">
+        <div class="absolute top-4 left-4 z-10 pointer-events-none bg-afNavy/85 backdrop-blur-md border border-white/15 rounded-xl px-3.5 py-2.5 text-[11px] font-mono text-slate-300 space-y-1 shadow-lg">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-sm border border-sky-400 bg-sky-400/20 inline-block"></span>
+            <span id="hud-envelope-text">Enveloppe Epitum JL : 360 × 360 × 610 mm</span>
+          </div>
+          <div class="text-[10px] text-slate-400" data-i18n="hudControls">Clic gauche : Rotation · Molette : Zoom · Clic droit : Pan</div>
+        </div>
+
+        <button onclick="resetCameraView()" class="absolute top-4 right-4 z-10 bg-afSlate/90 hover:bg-afCyanDark text-white border border-white/15 rounded-xl px-3.5 py-2 text-xs font-mono shadow-lg transition-colors cursor-pointer" data-i18n="btnResetCam">
+          Recentrer vue
+        </button>
+      </div>
+
+      <!-- Orientation & Scale Toolbar -->
+      <div class="px-5 py-3.5 bg-afSlate/95 border-t border-white/10 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-xs font-mono text-slate-300" data-i18n="lblRotate">Rotation 90° :</span>
+          <button onclick="rotatePartAxis('x')" class="px-2.5 py-1.5 rounded-lg bg-afNavy hover:bg-afCyanDark text-white font-mono text-xs border border-white/10 transition-colors cursor-pointer">+90° X</button>
+          <button onclick="rotatePartAxis('y')" class="px-2.5 py-1.5 rounded-lg bg-afNavy hover:bg-afCyanDark text-white font-mono text-xs border border-white/10 transition-colors cursor-pointer">+90° Y</button>
+          <button onclick="rotatePartAxis('z')" class="px-2.5 py-1.5 rounded-lg bg-afNavy hover:bg-afCyanDark text-white font-mono text-xs border border-white/10 transition-colors cursor-pointer">+90° Z</button>
+          <button onclick="layFlatOnBed()" class="px-3 py-1.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 font-mono text-xs border border-sky-400/30 transition-colors cursor-pointer" data-i18n="btnLayFlat">Poser à plat</button>
+        </div>
+
+        <div class="flex items-center gap-2.5">
+          <label for="part-scale-input" class="text-xs font-mono text-slate-300" data-i18n="lblScale">Échelle (%) :</label>
+          <input id="part-scale-input" type="number" value="100" min="5" max="1000" step="5" onchange="updatePartScale(this.value)" class="w-20 rounded-lg bg-afNavy border border-white/15 px-2.5 py-1.5 text-xs font-mono font-bold text-white text-center focus:border-afCyan outline-none" />
+          <button onclick="fitToBuildVolume()" class="px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-mono text-xs border border-emerald-400/30 transition-colors cursor-pointer" data-i18n="btnAutoFit">Ajuster max</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. FULL-WIDTH PART METROLOGY & BOUNDING BOX CARD -->
+    <div class="w-full rounded-2xl bg-white border border-slate-200 p-5 sm:p-6 shadow-sm">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xs font-mono font-bold uppercase tracking-wider text-slate-500" data-i18n="geoMetricsTitle">
+          Analyse Métrologique de la Pièce
+        </h3>
+        <span id="triangle-count-badge" class="text-xs font-mono text-slate-400">0 triangles</span>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div id="box-dim-x" class="rounded-xl bg-afLight border border-slate-200 p-3">
+          <span id="lbl-max-x" class="text-[11px] font-mono text-slate-400 block">DIM X (max 360)</span>
+          <span id="val-dim-x" class="text-base font-mono font-extrabold text-afNavy mt-0.5 block">0.0 mm</span>
+        </div>
+        <div id="box-dim-y" class="rounded-xl bg-afLight border border-slate-200 p-3">
+          <span id="lbl-max-y" class="text-[11px] font-mono text-slate-400 block">DIM Y (max 360)</span>
+          <span id="val-dim-y" class="text-base font-mono font-extrabold text-afNavy mt-0.5 block">0.0 mm</span>
+        </div>
+        <div id="box-dim-z" class="rounded-xl bg-afLight border border-slate-200 p-3">
+          <span id="lbl-max-z" class="text-[11px] font-mono text-slate-400 block">DIM Z (max 610)</span>
+          <span id="val-dim-z" class="text-base font-mono font-extrabold text-afNavy mt-0.5 block">0.0 mm</span>
+        </div>
+        <div class="rounded-xl bg-afLight border border-slate-200 p-3">
+          <span class="text-[11px] font-mono text-slate-400 block" data-i18n="lblNetVol">VOLUME NET</span>
+          <span id="val-volume" class="text-base font-mono font-extrabold text-afCyanDark mt-0.5 block">0.0 cm³</span>
+        </div>
+        <div class="rounded-xl bg-afLight border border-slate-200 p-3 col-span-2 sm:col-span-1">
+          <span class="text-[11px] font-mono text-slate-400 block" data-i18n="lblSurface">SURFACE</span>
+          <span id="val-surface" class="text-base font-mono font-extrabold text-afNavy mt-0.5 block">0.0 cm²</span>
+        </div>
+      </div>
+
+      <!-- Exceed Warning Banner -->
+      <div id="oversize-alert" class="hidden mt-4 rounded-xl bg-red-50 border border-red-200 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-red-800 text-xs">
+        <div class="flex items-start gap-3">
+          <svg class="w-5 h-5 text-red-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          <div>
+            <p id="oversize-title-text" class="font-bold">Attention : La pièce dépasse le volume utile de la machine sélectionnée.</p>
+            <p class="mt-0.5" data-i18n="oversizeDesc">Réorientez la pièce, réduisez l'échelle, cliquez sur « Ajuster max », ou basculez vers l'Epitum JL (360×360×610 mm).</p>
+          </div>
+        </div>
+        <button type="button" onclick="selectMachine('epitum_jl')" class="shrink-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold transition-colors cursor-pointer" data-i18n="btnSwitchEpitum">
+          Basculer vers Epitum JL (360×360×610 mm)
+        </button>
+      </div>
+    </div>
+
+    <!-- 4. FULL-WIDTH PARAMETERS & COST ESTIMATION SECTION -->
+    <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+      <!-- Left: Machine & Manufacturing Parameters Configurator (7 Cols) -->
+      <div class="lg:col-span-7 rounded-2xl bg-white border border-slate-200 p-5 sm:p-6 shadow-sm space-y-5">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <h2 class="text-base font-extrabold text-afNavy flex items-center gap-2">
+            <span class="w-6 h-6 rounded-lg bg-afCyanDark text-white font-mono text-xs flex items-center justify-center">2</span>
+            <span data-i18n="stepParamsTitle">Équipement & Paramètres d’Impression</span>
+          </h2>
+          <span class="text-[11px] font-mono text-slate-400">ISO / DFAM</span>
+        </div>
+
+        <!-- Interactive 4-Machine Selector Grid -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-xs font-bold uppercase tracking-wider text-slate-600" data-i18n="lblMachineChoice">Choix de l'imprimante 3D</label>
+            <span id="machine-speed-tag" class="text-[11px] font-mono text-afCyanDark font-semibold">160 mm/s · Enceinte fermée haute T°</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5" id="machine-selector-grid">
+            <!-- Epitum JL -->
+            <button type="button" id="mach-btn-epitum_jl" onclick="selectMachine('epitum_jl')" class="machine-card text-left p-3 rounded-xl border-2 border-afCyanDark bg-sky-50/60 transition-all cursor-pointer">
+              <div class="flex items-center justify-between gap-1">
+                <span class="text-xs font-extrabold text-afNavy">Epitum JL</span>
+                <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-afNavy text-white">XL PRO</span>
+              </div>
+              <span class="text-[11px] font-mono text-afCyanDark font-semibold block mt-1">360 × 360 × 610 mm</span>
+              <span class="text-[10px] text-slate-500 block mt-0.5" data-i18n="machSubEpitum">Grand format · Haute T° & Composites</span>
+            </button>
+
+            <!-- Creality K2 Plus -->
+            <button type="button" id="mach-btn-k2_plus" onclick="selectMachine('k2_plus')" class="machine-card text-left p-3 rounded-xl border border-slate-200 bg-white hover:border-afNavy/40 transition-all cursor-pointer">
+              <div class="flex items-center justify-between gap-1">
+                <span class="text-xs font-extrabold text-afNavy">Creality K2 Plus</span>
+                <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">COREXY</span>
+              </div>
+              <span class="text-[11px] font-mono text-slate-700 font-semibold block mt-1">350 × 350 × 350 mm</span>
+              <span class="text-[10px] text-slate-500 block mt-0.5" data-i18n="machSubK2">Enceinte chauffée 60°C · Multi-matériaux</span>
+            </button>
+
+            <!-- Elegoo Centauri Carbon 2 -->
+            <button type="button" id="mach-btn-centauri_c2" onclick="selectMachine('centauri_c2')" class="machine-card text-left p-3 rounded-xl border border-slate-200 bg-white hover:border-afNavy/40 transition-all cursor-pointer">
+              <div class="flex items-center justify-between gap-1">
+                <span class="text-xs font-extrabold text-afNavy">Elegoo Centauri Carbon 2</span>
+                <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">CARBON</span>
+              </div>
+              <span class="text-[11px] font-mono text-slate-700 font-semibold block mt-1">256 × 256 × 256 mm</span>
+              <span class="text-[10px] text-slate-500 block mt-0.5" data-i18n="machSubCentauri">Haute vitesse · Fils chargés carbone</span>
+            </button>
+
+            <!-- Creality V3 Plus -->
+            <button type="button" id="mach-btn-v3_plus" onclick="selectMachine('v3_plus')" class="machine-card text-left p-3 rounded-xl border border-slate-200 bg-white hover:border-afNavy/40 transition-all cursor-pointer">
+              <div class="flex items-center justify-between gap-1">
+                <span class="text-xs font-extrabold text-afNavy">Creality V3 Plus</span>
+                <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">RAPIDE</span>
+              </div>
+              <span class="text-[11px] font-mono text-slate-700 font-semibold block mt-1">300 × 300 × 330 mm</span>
+              <span class="text-[10px] text-slate-500 block mt-0.5" data-i18n="machSubV3">Prototypage grand plateau · PLA/PETG/TPU</span>
+            </button>
+          </div>
+
+          <!-- Machine-Material Compatibility Alert -->
+          <div id="machine-mat-warning" class="hidden mt-3 rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900 flex items-start justify-between gap-3">
+            <div class="space-y-1">
+              <p id="machine-mat-warning-text" class="font-semibold"></p>
+            </div>
+            <button type="button" onclick="selectMachine('k2_plus')" class="shrink-0 px-2.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] transition-colors cursor-pointer" data-i18n="btnSwitchEnclosed">
+              Passer sur K2 Plus
+            </button>
+          </div>
+        </div>
+
+        <!-- Material Selector -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label for="param-material" class="text-xs font-bold uppercase tracking-wider text-slate-600" data-i18n="lblMaterial">Matériau industriel</label>
+            <span id="material-density-tag" class="text-[11px] font-mono text-afCyanDark font-semibold">1.27 g/cm³</span>
+          </div>
+          <select id="param-material" onchange="recalculateCost()" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold text-afNavy bg-white focus:border-afCyanDark focus:ring-2 focus:ring-afCyanDark/20 outline-none">
+            <option value="cf_composite">Composites fibrés (Carbone / Fibre de verre) — Haute rigidité</option>
+            <option value="nylon">Nylon Industriel (PA12 / PA6) — Résistance mécanique & usure</option>
+            <option value="abs_asa">ABS / ASA — Résistance thermique & UV</option>
+            <option value="pc">Polycarbonate (PC) — Haute résistance aux chocs</option>
+            <option value="tpu">TPU Souple (95A) — Élastomère / Orthèses & Semelles</option>
+            <option value="petg" selected>PETG Technique — Polyvalent & résistant chimiquement</option>
+            <option value="pla">PLA Pro — Prototypage rapide & maquettes</option>
+            <option value="resin">Résines techniques — Haute définition micrométrique</option>
+          </select>
+          <p id="material-tech-note" class="text-[11px] text-slate-500 mt-1.5"></p>
+        </div>
+
+        <!-- Infill Density Slider + Infill Pattern -->
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center bg-afLight p-4 rounded-xl border border-slate-200/80">
+          <div class="sm:col-span-7 space-y-2">
+            <div class="flex items-center justify-between">
+              <label for="param-infill" class="text-xs font-bold uppercase tracking-wider text-slate-600" data-i18n="lblInfill">Remplissage (Infill)</label>
+              <span id="infill-val-display" class="text-xs font-mono font-extrabold text-afNavy bg-white px-2 py-0.5 rounded border border-slate-200">25%</span>
+            </div>
+            <input id="param-infill" type="range" min="10" max="100" step="5" value="25" oninput="updateInfillLabel(this.value); recalculateCost();" class="w-full" />
+            <div class="flex justify-between text-[10px] font-mono text-slate-400">
+              <span>10% (Léger)</span>
+              <span>50% (Renforcé)</span>
+              <span>100% (Plein)</span>
+            </div>
+          </div>
+
+          <div class="sm:col-span-5">
+            <label for="param-pattern" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" data-i18n="lblPattern">Motif interne</label>
+            <select id="param-pattern" onchange="recalculateCost()" class="w-full rounded-xl border border-slate-300 px-2.5 py-2 text-xs font-semibold text-afNavy bg-white focus:border-afCyanDark outline-none">
+              <option value="gyroid" selected>Gyroïde (Isotrope)</option>
+              <option value="honeycomb">Nid d'abeille</option>
+              <option value="grid">Grille 3D</option>
+              <option value="cubic">Cubique</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Layer Height & Wall Thickness -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="param-layer" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" data-i18n="lblLayer">Hauteur de couche (Résolution)</label>
+            <select id="param-layer" onchange="recalculateCost()" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-xs sm:text-sm font-semibold text-afNavy bg-white focus:border-afCyanDark outline-none">
+              <option value="0.10">0.10 mm — Haute précision</option>
+              <option value="0.15">0.15 mm — Finition fine</option>
+              <option value="0.20" selected>0.20 mm — Standard industriel</option>
+              <option value="0.30">0.30 mm — Prototypage rapide</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="param-walls" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" data-i18n="lblWalls">Parois / Périmètres</label>
+            <select id="param-walls" onchange="recalculateCost()" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-xs sm:text-sm font-semibold text-afNavy bg-white focus:border-afCyanDark outline-none">
+              <option value="2">2 parois (0.8 mm — Standard)</option>
+              <option value="3" selected>3 parois (1.2 mm — Mécanique)</option>
+              <option value="4">4 parois (1.6 mm — Renforcé)</option>
+              <option value="6">6 parois (2.4 mm — Haute charge)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Supports & Post-Processing -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="param-supports" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" data-i18n="lblSupports">Supports d'impression</label>
+            <select id="param-supports" onchange="recalculateCost()" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-xs sm:text-sm font-semibold text-afNavy bg-white focus:border-afCyanDark outline-none">
+              <option value="none">Aucun support (Auto-portant)</option>
+              <option value="auto" selected>Auto / Arborescents (Recommandé)</option>
+              <option value="full">Supports complets (Porte-à-faux complexes)</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="param-finish" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" data-i18n="lblFinish">Post-traitement / Finition</label>
+            <select id="param-finish" onchange="recalculateCost()" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-xs sm:text-sm font-semibold text-afNavy bg-white focus:border-afCyanDark outline-none">
+              <option value="raw" selected>Brut de plateau (Retrait supports)</option>
+              <option value="sanding">Ponçage & finition satinée</option>
+              <option value="annealing">Recuit thermique (Tenue T° max)</option>
+              <option value="vapor">Lissage & apprêt peinture</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Quantity, Lead Time & Instant Cost Summary (5 Cols) -->
+      <div class="lg:col-span-5 rounded-2xl bg-afNavy text-white p-6 shadow-xl border border-slate-800 space-y-5 lg:sticky lg:top-24">
+        <div class="flex items-center justify-between border-b border-white/10 pb-3">
+          <div>
+            <span class="text-[11px] font-mono uppercase tracking-widest text-sky-400" data-i18n="estEyebrow">ESTIMATION BUDGÉTAIRE</span>
+            <h3 class="text-lg font-extrabold" data-i18n="estTitle">Synthèse Technique & Coût</h3>
+          </div>
+          <span id="recommended-machine-badge" class="text-[11px] font-mono font-bold px-2.5 py-1 rounded-lg bg-sky-500/20 text-sky-300 border border-sky-400/30">
+            EPITUM JL (360×360×610)
+          </span>
+        </div>
+
+        <!-- Quantity & Lead Time Controls -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-afSlate/70 p-3.5 rounded-xl border border-white/10">
+          <div>
+            <label for="param-qty" class="block text-[11px] font-mono uppercase tracking-wider text-slate-300 mb-1.5" data-i18n="lblQty">Quantité de pièces</label>
+            <div class="flex items-center">
+              <button type="button" onclick="adjustQty(-1)" class="px-3 py-1.5 rounded-l-lg bg-afNavy hover:bg-afCyanDark border border-white/15 font-bold text-white cursor-pointer">−</button>
+              <input id="param-qty" type="number" min="1" max="1000" value="1" oninput="recalculateCost()" class="w-full bg-afNavy/90 border-y border-white/15 py-1.5 text-center text-sm font-mono font-extrabold text-white outline-none" />
+              <button type="button" onclick="adjustQty(1)" class="px-3 py-1.5 rounded-r-lg bg-afNavy hover:bg-afCyanDark border border-white/15 font-bold text-white cursor-pointer">+</button>
+            </div>
+            <span id="qty-discount-badge" class="text-[10px] font-mono text-emerald-400 font-semibold mt-1 block"></span>
+          </div>
+
+          <div>
+            <label for="param-urgency" class="block text-[11px] font-mono uppercase tracking-wider text-slate-300 mb-1.5" data-i18n="lblLeadTime">Délai de fabrication</label>
+            <select id="param-urgency" onchange="recalculateCost()" class="w-full rounded-lg border border-white/15 px-2.5 py-2 text-xs font-semibold text-white bg-afNavy focus:border-afCyan outline-none">
+              <option value="standard" selected>Standard (4–6 j. ouvrés)</option>
+              <option value="express">Urgence Express (48h–72h)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Weight & Print Time KPIs -->
+        <div class="grid grid-cols-2 gap-3">
+          <div class="rounded-xl bg-afSlate/90 border border-white/10 p-3.5">
+            <span class="text-[11px] font-mono text-slate-400 block" data-i18n="kpiWeight">MASSE ESTIMÉE / PIÈCE</span>
+            <span id="res-weight" class="text-xl font-mono font-extrabold text-white mt-0.5 block">0.0 g</span>
+          </div>
+          <div class="rounded-xl bg-afSlate/90 border border-white/10 p-3.5">
+            <span class="text-[11px] font-mono text-slate-400 block" data-i18n="kpiTime">TEMPS MACHINE / PIÈCE</span>
+            <span id="res-time" class="text-xl font-mono font-extrabold text-sky-300 mt-0.5 block">0h 00m</span>
+          </div>
+        </div>
+
+        <!-- Cost Line Items -->
+        <div class="space-y-2.5 text-xs sm:text-sm border-t border-white/10 pt-4">
+          <div class="flex justify-between text-slate-300">
+            <span data-i18n="lineMat">Matière première & consommables</span>
+            <span id="res-cost-mat" class="font-mono font-semibold text-white">0.00 MAD</span>
+          </div>
+          <div class="flex justify-between text-slate-300">
+            <span data-i18n="lineMach">Temps machine & énergie</span>
+            <span id="res-cost-mach" class="font-mono font-semibold text-white">0.00 MAD</span>
+          </div>
+          <div class="flex justify-between text-slate-300">
+            <span data-i18n="lineSetup">Préparation FAO, post-traitement & contrôle</span>
+            <span id="res-cost-setup" class="font-mono font-semibold text-white">0.00 MAD</span>
+          </div>
+          <div id="discount-row" class="hidden flex justify-between text-emerald-400 font-semibold">
+            <span data-i18n="lineDiscount">Remise quantité série</span>
+            <span id="res-discount" class="font-mono">-0.00 MAD</span>
+          </div>
+        </div>
+
+        <!-- Total Price Display (HT & TTC) -->
+        <div class="rounded-xl bg-gradient-to-r from-afSlate to-[#162447] border border-sky-400/30 p-4 flex items-end justify-between gap-2">
+          <div>
+            <span class="text-xs font-mono text-slate-300 block">Unit. HT : <strong id="res-unit-price" class="text-white">0.00 MAD</strong></span>
+            <span class="text-[11px] font-mono text-slate-400 block mt-0.5">Total TTC (20%) : <strong id="res-total-ttc" class="text-slate-200">0.00 MAD</strong></span>
+            <span class="text-xs font-mono uppercase tracking-wider text-sky-300 mt-1.5 block" data-i18n="lblTotalEst">TOTAL ESTIMÉ (HT)</span>
+          </div>
+          <div class="text-right">
+            <span id="res-total-price" class="text-2xl sm:text-3xl font-mono font-extrabold text-afCyan">0.00 MAD</span>
+          </div>
+        </div>
+
+        <!-- Primary CTA Button -->
+        <button onclick="openSimulatorQuoteModal()" class="w-full bg-afCyan hover:bg-sky-400 text-afNavy font-extrabold py-4 px-6 rounded-xl shadow-lg shadow-sky-500/20 transition-all cursor-pointer text-sm sm:text-base flex items-center justify-center gap-2">
+          <span data-i18n="btnRequestOfficialQuote">Transférer vers demande de devis</span>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        </button>
+
+        <p class="text-[11px] text-slate-400 text-center leading-relaxed" data-i18n="estDisclaimer">
+          * Estimation indicative générée par l'algorithme AF3D. Validation finale par un ingénieur sous 24h ouvrées avec garantie de confidentialité NDA.
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="bg-afNavy text-white border-t border-white/10 mt-12">
+    <div class="w-full px-4 sm:px-6 lg:px-10 py-10">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="flex items-center gap-3.5">
+          <img
+            src="AF3D_symbol_HD_transparent.png"
+            alt="AF3D Symbol"
+            onerror="this.style.display='none'"
+            class="h-10 w-auto object-contain"
+          />
+          <div>
+            <span class="font-extrabold text-lg tracking-tight">Advanced FAB <span class="text-sky-400">3D</span> (AF3D)</span>
+            <p class="text-xs text-slate-400" data-i18n="footerTag">L’expertise en fabrication additive · Maroc · +212 6 62 87 72 15 · contact@af3d.ma</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-6 text-xs text-slate-300">
+          <a href="advanced_fab_3d_af3d_corporate_website.html" class="hover:text-white transition-colors" data-i18n="backHome">← Retour à l'accueil AF3D</a>
+          <span class="font-mono text-slate-400">© 2026 Advanced Fab 3D</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==================== QUOTE CONFIRMATION MODAL ==================== -->
+  <div id="sim-quote-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-afNavy/80 backdrop-blur-sm p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden my-8">
+      <div class="bg-afNavy text-white px-6 py-5 flex items-center justify-between">
+        <div>
+          <span class="text-[11px] font-mono uppercase tracking-widest text-sky-400" data-i18n="modalBadge">VALIDATION INGÉNIEUR & NDA</span>
+          <h3 class="text-xl font-bold mt-0.5" data-i18n="modalTitle">Finaliser votre demande de devis 3D</h3>
+        </div>
+        <button onclick="closeSimulatorQuoteModal()" class="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer" aria-label="Fermer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form id="sim-quote-form" onsubmit="submitSimulatorQuote(event)" class="p-6 sm:p-8 space-y-4">
+        <div class="rounded-xl bg-afLight border border-slate-200 p-4 text-xs font-mono text-afNavy space-y-1">
+          <p class="font-bold text-afCyanDark uppercase" data-i18n="modalSummaryLabel">Configuration importée du simulateur :</p>
+          <p id="modal-tech-summary" class="text-slate-700 leading-relaxed"></p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" data-i18n="lblName">Nom & Société *</label>
+            <input type="text" required placeholder="Ex: Youssef Alami - AeroTech Maroc" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-afCyanDark outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" data-i18n="lblEmail">Email professionnel *</label>
+            <input type="email" required placeholder="contact@entreprise.ma" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-afCyanDark outline-none" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" data-i18n="lblPhone">Téléphone</label>
+            <input type="tel" placeholder="+212 6 XX XX XX XX" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-afCyanDark outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" data-i18n="lblSector">Secteur d'activité</label>
+            <select class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm bg-white focus:border-afCyanDark outline-none">
+              <option value="Automobile">Automobile</option>
+              <option value="Aéronautique">Aéronautique</option>
+              <option value="Médical (Orthèses & Semelles)">Médical (Orthèses & Semelles)</option>
+              <option value="Industrie Générale">Industrie Générale</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" data-i18n="lblNotes">Contraintes spécifiques (tolérances, inserts, livraison)</label>
+          <textarea rows="2" placeholder="Précisez vos exigences fonctionnelles ou contraintes d'assemblage..." class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-afCyanDark outline-none"></textarea>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+          <span class="text-xs text-slate-500 flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            <span data-i18n="modalSla">Confidentialité NDA · Réponse sous 24h</span>
+          </span>
+          <button type="submit" class="w-full sm:w-auto bg-afCyanDark hover:bg-afNavy text-white font-bold px-6 py-3 rounded-xl shadow-md transition-all cursor-pointer text-sm" data-i18n="btnSendSimQuote">
+            Envoyer cette configuration
+          </button>
+        </div>
+      </form>
+
+      <div id="sim-quote-success" class="hidden p-8 text-center space-y-4">
+        <div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <h4 class="text-2xl font-extrabold text-afNavy" data-i18n="confirmTitle">Simulation transmise à nos ingénieurs !</h4>
+        <p class="text-sm text-slate-600 max-w-md mx-auto" data-i18n="confirmDesc">
+          Votre étude de faisabilité et votre chiffrage ont été enregistrés. Un ingénieur AF3D vous contactera sous 24h ouvrées.
+        </p>
+        <button onclick="closeSimulatorQuoteModal()" class="bg-afNavy text-white font-bold px-6 py-2.5 rounded-xl text-sm cursor-pointer" data-i18n="confirmClose">
+          Continuer la simulation
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 3D ENGINE, CAD PARSERS & COST CALCULATOR ==================== -->
+  <script>
+    const MACHINES_DB = {
+      epitum_jl: {
+        id: 'epitum_jl',
+        name: 'Epitum JL',
+        upperName: 'EPITUM JL',
+        maxX: 360,
+        maxY: 360,
+        maxZ: 610,
+        speedFactor: 1.0,
+        hourlyRate: 75,
+        setupFee: 50,
+        enclosed: true,
+        supportsHighTemp: true,
+        supportsComposite: true,
+        supportsResin: true,
+        speedLabelFr: '160 mm/s · Enceinte fermée haute T°',
+        speedLabelEn: '160 mm/s · High-Temp Enclosed Chamber'
+      },
+      k2_plus: {
+        id: 'k2_plus',
+        name: 'Creality K2 Plus',
+        upperName: 'CREALITY K2 PLUS',
+        maxX: 350,
+        maxY: 350,
+        maxZ: 350,
+        speedFactor: 1.45,
+        hourlyRate: 62,
+        setupFee: 40,
+        enclosed: true,
+        supportsHighTemp: true,
+        supportsComposite: true,
+        supportsResin: false,
+        speedLabelFr: '300 mm/s CoreXY · Enceinte chauffée 60°C',
+        speedLabelEn: '300 mm/s CoreXY · 60°C Heated Chamber'
+      },
+      centauri_c2: {
+        id: 'centauri_c2',
+        name: 'Elegoo Centauri Carbon 2',
+        upperName: 'ELEGOO CENTAURI CARBON 2',
+        maxX: 256,
+        maxY: 256,
+        maxZ: 256,
+        speedFactor: 1.50,
+        hourlyRate: 55,
+        setupFee: 35,
+        enclosed: true,
+        supportsHighTemp: true,
+        supportsComposite: true,
+        supportsResin: false,
+        speedLabelFr: '320 mm/s CoreXY · Optimisée Carbone',
+        speedLabelEn: '320 mm/s CoreXY · Carbon-Fiber Tuned'
+      },
+      v3_plus: {
+        id: 'v3_plus',
+        name: 'Creality V3 Plus',
+        upperName: 'CREALITY V3 PLUS',
+        maxX: 300,
+        maxY: 300,
+        maxZ: 330,
+        speedFactor: 1.35,
+        hourlyRate: 45,
+        setupFee: 30,
+        enclosed: false,
+        supportsHighTemp: false,
+        supportsComposite: false,
+        supportsResin: false,
+        speedLabelFr: '280 mm/s · Châssis ouvert grand plateau',
+        speedLabelEn: '280 mm/s · Open-Frame Large Bed'
+      }
+    };
+
+    const MATERIALS_DB = {
+      cf_composite: {
+        nameFr: "Composites fibrés (Carbone / Verre)",
+        nameEn: "Fiber Composites (Carbon / Glass)",
+        density: 1.35,
+        pricePerGram: 1.85,
+        speedMultiplier: 0.78,
+        colorHex: 0x1E293B,
+        noteFr: "Rigidité maximale, idéal pour outillages de ligne et supports aéronautiques.",
+        noteEn: "Maximum stiffness, ideal for line tooling and aerospace brackets."
+      },
+      nylon: {
+        nameFr: "Nylon Industriel (PA12 / PA6)",
+        nameEn: "Industrial Nylon (PA12 / PA6)",
+        density: 1.14,
+        pricePerGram: 1.35,
+        speedMultiplier: 0.85,
+        colorHex: 0x334155,
+        noteFr: "Excellente tenue aux chocs, à l'usure et aux hydrocarbures.",
+        noteEn: "Superior resistance to impact, abrasion, and automotive fluids."
+      },
+      abs_asa: {
+        nameFr: "ABS / ASA Technique",
+        nameEn: "Engineering ABS / ASA",
+        density: 1.07,
+        pricePerGram: 0.85,
+        speedMultiplier: 0.95,
+        colorHex: 0x475569,
+        noteFr: "Tenue thermique jusqu'à 100°C et résistance UV (ASA).",
+        noteEn: "Thermal resistance up to 100°C and outdoor UV stability (ASA)."
+      },
+      pc: {
+        nameFr: "Polycarbonate (PC)",
+        nameEn: "Polycarbonate (PC)",
+        density: 1.20,
+        pricePerGram: 1.45,
+        speedMultiplier: 0.82,
+        colorHex: 0x94A3B8,
+        noteFr: "Très haute résistance mécanique et stabilité thermique.",
+        noteEn: "Ultra-high impact resistance and thermal stability."
+      },
+      tpu: {
+        nameFr: "TPU Souple (95A)",
+        nameEn: "Flexible TPU (95A)",
+        density: 1.21,
+        pricePerGram: 1.15,
+        speedMultiplier: 0.65,
+        colorHex: 0x0EA5E9,
+        noteFr: "Élastomère flexible dédié aux semelles orthopédiques, orthèses et joints.",
+        noteEn: "Flexible elastomer dedicated to medical orthopedic insoles, orthoses, and seals."
+      },
+      petg: {
+        nameFr: "PETG Technique",
+        nameEn: "Engineering PETG",
+        density: 1.27,
+        pricePerGram: 0.72,
+        speedMultiplier: 1.0,
+        colorHex: 0x0284C7,
+        noteFr: "Bon compromis rigidité, résistance chimique et rapidité de fabrication.",
+        noteEn: "Balanced stiffness, chemical resistance, and fast turnaround."
+      },
+      pla: {
+        nameFr: "PLA Pro",
+        nameEn: "PLA Pro",
+        density: 1.24,
+        pricePerGram: 0.55,
+        speedMultiplier: 1.15,
+        colorHex: 0x38BDF8,
+        noteFr: "Prototypage rapide, maquettes visuelles et validation d'encombrement.",
+        noteEn: "Rapid prototyping, visual models, and volumetric fit checks."
+      },
+      resin: {
+        nameFr: "Résines techniques HD",
+        nameEn: "HD Engineering Resins",
+        density: 1.18,
+        pricePerGram: 2.10,
+        speedMultiplier: 0.90,
+        colorHex: 0x6366F1,
+        noteFr: "Haute définition micrométrique et état de surface lisse sans stries.",
+        noteEn: "Micron-level resolution and smooth surface finish."
+      }
+    };
+
+    let currentLang = 'fr';
+    let currentMachineKey = 'epitum_jl';
+    let scene, camera, renderer, controls;
+    let buildEnvelopeGroup = null;
+    let partMesh = null;
+    let bboxHelper = null;
+    let currentFileName = "Support_Aero_DFAM.stl";
+    let baseGeometry = null;
+    let currentScalePercent = 100;
+    let partMetrics = {
+      dimX: 0,
+      dimY: 0,
+      dimZ: 0,
+      volumeCm3: 0,
+      surfaceCm2: 0,
+      triangles: 0,
+      fitsEnvelope: true
+    };
+    let lastCalculation = {};
+
+    const i18n = {
+      fr: {
+        brandTagline: "L’EXPERTISE EN FABRICATION ADDITIVE",
+        navAbout: "Qui sommes-nous",
+        navSectors: "Secteurs",
+        navServices: "Services",
+        navMachines: "Équipements",
+        navMaterials: "Matériaux",
+        navSimulator: "Simulateur 3D",
+        navQuote: "Valider mon devis",
+        simTitle: "Simulateur de Coût & Volume d’Impression 3D",
+        simSubtitle: "Importez votre modèle CAO (.STL ou .OBJ), sélectionnez l’imprimante AF3D adaptée (Epitum JL, Creality K2 Plus, Elegoo Centauri Carbon 2, Creality V3 Plus) et configurez vos paramètres pour obtenir une estimation immédiate.",
+        chamberLabel: "CHAMBRE MACHINE ACTIVE",
+        stepImportTitle: "Importer votre fichier 3D (.STL / .OBJ)",
+        stepImportSub: "Analyse géométrique locale dans votre navigateur · Confidentialité totale (NDA)",
+        presetLabel: "Pièces démo :",
+        preset1: "Support Aéro",
+        preset2: "Boîtier Auto",
+        preset3: "Orthèse / Semelle",
+        dropTitle: "Glissez-déposez votre fichier .STL ou .OBJ ici, ou cliquez pour parcourir",
+        hudControls: "Clic gauche : Rotation · Molette : Zoom · Clic droit : Pan",
+        btnResetCam: "Recentrer vue",
+        lblRotate: "Rotation 90° :",
+        btnLayFlat: "Poser à plat",
+        lblScale: "Échelle (%) :",
+        btnAutoFit: "Ajuster max",
+        geoMetricsTitle: "Analyse Métrologique de la Pièce",
+        lblNetVol: "VOLUME NET",
+        lblSurface: "SURFACE",
+        oversizeDesc: "Réorientez la pièce, réduisez l'échelle, cliquez sur « Ajuster max », ou basculez vers l'Epitum JL (360×360×610 mm).",
+        btnSwitchEpitum: "Basculer vers Epitum JL (360×360×610 mm)",
+        stepParamsTitle: "Équipement & Paramètres d’Impression",
+        lblMachineChoice: "Choix de l'imprimante 3D",
+        machSubEpitum: "Grand format · Haute T° & Composites",
+        machSubK2: "Enceinte chauffée 60°C · Multi-matériaux",
+        machSubCentauri: "Haute vitesse · Fils chargés carbone",
+        machSubV3: "Prototypage grand plateau · PLA/PETG/TPU",
+        btnSwitchEnclosed: "Passer sur K2 Plus",
+        lblMaterial: "Matériau industriel",
+        lblInfill: "Remplissage (Infill)",
+        lblPattern: "Motif interne",
+        lblLayer: "Hauteur de couche (Résolution)",
+        lblWalls: "Parois / Périmètres",
+        lblSupports: "Supports d'impression",
+        lblFinish: "Post-traitement / Finition",
+        estEyebrow: "ESTIMATION BUDGÉTAIRE",
+        estTitle: "Synthèse Technique & Coût",
+        lblQty: "Quantité de pièces",
+        lblLeadTime: "Délai de fabrication",
+        kpiWeight: "MASSE ESTIMÉE / PIÈCE",
+        kpiTime: "TEMPS MACHINE / PIÈCE",
+        lineMat: "Matière première & consommables",
+        lineMach: "Temps machine & énergie",
+        lineSetup: "Préparation FAO, post-traitement & contrôle",
+        lineDiscount: "Remise quantité série",
+        lblTotalEst: "TOTAL ESTIMÉ (HT)",
+        btnRequestOfficialQuote: "Transférer vers demande de devis",
+        estDisclaimer: "* Estimation indicative générée par l'algorithme AF3D. Validation finale par un ingénieur sous 24h ouvrées avec garantie de confidentialité NDA.",
+        footerTag: "L’expertise en fabrication additive · Maroc · +212 6 62 87 72 15 · contact@af3d.ma",
+        backHome: "← Retour à l'accueil AF3D",
+        modalBadge: "VALIDATION INGÉNIEUR & NDA",
+        modalTitle: "Finaliser votre demande de devis 3D",
+        modalSummaryLabel: "Configuration importée du simulateur :",
+        lblName: "Nom & Société *",
+        lblEmail: "Email professionnel *",
+        lblPhone: "Téléphone",
+        lblSector: "Secteur d'activité",
+        lblNotes: "Contraintes spécifiques (tolérances, inserts, livraison)",
+        modalSla: "Confidentialité NDA · Réponse sous 24h",
+        btnSendSimQuote: "Envoyer cette configuration",
+        confirmTitle: "Simulation transmise à nos ingénieurs !",
+        confirmDesc: "Votre étude de faisabilité et votre chiffrage ont été enregistrés. Un ingénieur AF3D vous contactera sous 24h ouvrées.",
+        confirmClose: "Continuer la simulation"
+      },
+      en: {
+        brandTagline: "ADDITIVE MANUFACTURING EXPERTISE",
+        navAbout: "About Us",
+        navSectors: "Industries",
+        navServices: "Services",
+        navMachines: "Equipment",
+        navMaterials: "Materials",
+        navSimulator: "3D Simulator",
+        navQuote: "Validate Quote",
+        simTitle: "3D Printing Cost & Build Volume Simulator",
+        simSubtitle: "Upload your CAD file (.STL or .OBJ), select the right AF3D printer (Epitum JL, Creality K2 Plus, Elegoo Centauri Carbon 2, Creality V3 Plus), and configure parameters for an instant estimate.",
+        chamberLabel: "ACTIVE MACHINE CHAMBER",
+        stepImportTitle: "Import Your 3D CAD File (.STL / .OBJ)",
+        stepImportSub: "Local geometric analysis in your browser · Full NDA confidentiality",
+        presetLabel: "Demo parts:",
+        preset1: "Aero Bracket",
+        preset2: "Auto Housing",
+        preset3: "Orthotic / Insole",
+        dropTitle: "Drag & drop your .STL or .OBJ file here, or click to browse",
+        hudControls: "Left-click: Orbit · Scroll: Zoom · Right-click: Pan",
+        btnResetCam: "Reset View",
+        lblRotate: "Rotate 90°:",
+        btnLayFlat: "Lay Flat",
+        lblScale: "Scale (%):",
+        btnAutoFit: "Max Fit",
+        geoMetricsTitle: "Part Metrology & Bounding Box",
+        lblNetVol: "NET VOLUME",
+        lblSurface: "SURFACE AREA",
+        oversizeDesc: "Reorient the part, reduce scale, click 'Max Fit', or switch to the Epitum JL (360×360×610 mm).",
+        btnSwitchEpitum: "Switch to Epitum JL (360×360×610 mm)",
+        stepParamsTitle: "Equipment & Print Parameters",
+        lblMachineChoice: "Select 3D Printer",
+        machSubEpitum: "Large Format · High-Temp & Composites",
+        machSubK2: "60°C Heated Chamber · Multi-Material",
+        machSubCentauri: "High Speed · Carbon-Fiber Tuned",
+        machSubV3: "Large Bed Prototyping · PLA/PETG/TPU",
+        btnSwitchEnclosed: "Switch to K2 Plus",
+        lblMaterial: "Engineering Material",
+        lblInfill: "Infill Density",
+        lblPattern: "Infill Pattern",
+        lblLayer: "Layer Height (Resolution)",
+        lblWalls: "Wall Perimeters",
+        lblSupports: "Support Structures",
+        lblFinish: "Post-Processing / Finish",
+        estEyebrow: "BUDGETARY ESTIMATE",
+        estTitle: "Technical & Cost Summary",
+        lblQty: "Part Quantity",
+        lblLeadTime: "Production Lead Time",
+        kpiWeight: "EST. WEIGHT / PART",
+        kpiTime: "MACHINE TIME / PART",
+        lineMat: "Raw material & consumables",
+        lineMach: "Machine runtime & energy",
+        lineSetup: "CAM prep, post-processing & QC",
+        lineDiscount: "Volume batch discount",
+        lblTotalEst: "ESTIMATED TOTAL (EX. VAT)",
+        btnRequestOfficialQuote: "Transfer to Official Quote",
+        estDisclaimer: "* Indicative estimate generated by AF3D's slicing engine. Final validation by an engineer within 24 business hours under strict NDA.",
+        footerTag: "Additive Manufacturing Expertise · Morocco · +212 6 62 87 72 15 · contact@af3d.ma",
+        backHome: "← Back to AF3D Home",
+        modalBadge: "ENGINEER VALIDATION & NDA",
+        modalTitle: "Finalize Your 3D Printing Quote",
+        modalSummaryLabel: "Configuration imported from simulator:",
+        lblName: "Full Name & Company *",
+        lblEmail: "Work Email *",
+        lblPhone: "Phone Number",
+        lblSector: "Industry Sector",
+        lblNotes: "Specific requirements (tolerances, inserts, delivery)",
+        modalSla: "Strict NDA Privacy · 24h Response",
+        btnSendSimQuote: "Submit Configuration",
+        confirmTitle: "Simulation sent to our engineers!",
+        confirmDesc: "Your feasibility study and cost estimate have been logged. An AF3D engineer will reach out within 24 business hours.",
+        confirmClose: "Continue Simulating"
+      }
+    };
+
+    function init3DViewer() {
+      const container = document.getElementById('viewer-canvas-container');
+      const width = container.clientWidth || 900;
+      const height = container.clientHeight || 520;
+
+      scene = new THREE.Scene();
+
+      camera = new THREE.PerspectiveCamera(42, width / height, 1, 5000);
+      camera.position.set(560, 480, 620);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      container.appendChild(renderer.domElement);
+
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.06;
+      controls.target.set(0, 140, 0);
+      controls.minDistance = 80;
+      controls.maxDistance = 2400;
+
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+      scene.add(ambientLight);
+
+      const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.85);
+      dirLight1.position.set(400, 800, 500);
+      scene.add(dirLight1);
+
+      const dirLight2 = new THREE.DirectionalLight(0x38BDF8, 0.45);
+      dirLight2.position.set(-400, 300, -400);
+      scene.add(dirLight2);
+
+      rebuildChamberEnvelope(MACHINES_DB[currentMachineKey]);
+
+      if (typeof ResizeObserver !== 'undefined') {
+        const ro = new ResizeObserver(() => onViewerResize());
+        ro.observe(container);
+      }
+      window.addEventListener('resize', onViewerResize);
+      animate3D();
+    }
+
+    function rebuildChamberEnvelope(mach) {
+      if (buildEnvelopeGroup) {
+        scene.remove(buildEnvelopeGroup);
+      }
+      buildEnvelopeGroup = new THREE.Group();
+
+      const bedSize = Math.max(mach.maxX, mach.maxY);
+      const divisions = Math.max(6, Math.round(bedSize / 30));
+      const gridHelper = new THREE.GridHelper(bedSize, divisions, 0x0EA5E9, 0x1E293B);
+      gridHelper.scale.set(mach.maxX / bedSize, 1, mach.maxY / bedSize);
+      gridHelper.position.y = 0;
+      buildEnvelopeGroup.add(gridHelper);
+
+      const bedGeo = new THREE.PlaneGeometry(mach.maxX, mach.maxY);
+      const bedMat = new THREE.MeshBasicMaterial({
+        color: 0x0EA5E9,
+        transparent: true,
+        opacity: 0.06,
+        side: THREE.DoubleSide
+      });
+      const bedPlane = new THREE.Mesh(bedGeo, bedMat);
+      bedPlane.rotation.x = -Math.PI / 2;
+      bedPlane.position.y = -0.3;
+      buildEnvelopeGroup.add(bedPlane);
+
+      const boxGeo = new THREE.BoxGeometry(mach.maxX, mach.maxZ, mach.maxY);
+      const edgesGeo = new THREE.EdgesGeometry(boxGeo);
+      const edgesMat = new THREE.LineBasicMaterial({ color: 0x0EA5E9, transparent: true, opacity: 0.5 });
+      const wireframeBox = new THREE.LineSegments(edgesGeo, edgesMat);
+      wireframeBox.position.y = mach.maxZ / 2;
+      buildEnvelopeGroup.add(wireframeBox);
+
+      const axesHelper = new THREE.AxesHelper(75);
+      axesHelper.position.set(-mach.maxX / 2, 0.5, -mach.maxY / 2);
+      buildEnvelopeGroup.add(axesHelper);
+
+      scene.add(buildEnvelopeGroup);
+
+      if (controls) {
+        controls.target.set(0, Math.min(180, mach.maxZ * 0.35), 0);
+        controls.update();
+      }
+    }
+
+    function selectMachine(machineKey) {
+      if (!MACHINES_DB[machineKey]) return;
+      currentMachineKey = machineKey;
+      const mach = MACHINES_DB[machineKey];
+
+      document.querySelectorAll('.machine-card').forEach(card => {
+        card.className = "machine-card text-left p-3 rounded-xl border border-slate-200 bg-white hover:border-afNavy/40 transition-all cursor-pointer";
+      });
+      const activeCard = document.getElementById(`mach-btn-${machineKey}`);
+      if (activeCard) {
+        activeCard.className = "machine-card text-left p-3 rounded-xl border-2 border-afCyanDark bg-sky-50/60 transition-all cursor-pointer";
+      }
+
+      const heroBadge = document.getElementById('hero-chamber-badge');
+      if (heroBadge) heroBadge.textContent = `CHIFFRAGE INSTANTANÉ · ${mach.upperName} (${mach.maxX} × ${mach.maxY} × ${mach.maxZ} MM)`;
+      const heroTag = document.getElementById('hero-machine-tag');
+      if (heroTag) heroTag.textContent = mach.upperName;
+      const heroX = document.getElementById('hero-max-x');
+      if (heroX) heroX.textContent = mach.maxX;
+      const heroY = document.getElementById('hero-max-y');
+      if (heroY) heroY.textContent = mach.maxY;
+      const heroZ = document.getElementById('hero-max-z');
+      if (heroZ) heroZ.textContent = mach.maxZ;
+
+      const viewerLabel = document.getElementById('viewer-machine-label');
+      if (viewerLabel) viewerLabel.textContent = `AF3D // ${mach.upperName}`;
+      const viewerDims = document.getElementById('viewer-dims-label');
+      if (viewerDims) viewerDims.textContent = `(${mach.maxX} × ${mach.maxY} × ${mach.maxZ} mm)`;
+
+      const hudEnv = document.getElementById('hud-envelope-text');
+      if (hudEnv) {
+        hudEnv.textContent = currentLang === 'fr'
+          ? `Enveloppe ${mach.name} : ${mach.maxX} × ${mach.maxY} × ${mach.maxZ} mm`
+          : `${mach.name} Envelope: ${mach.maxX} × ${mach.maxY} × ${mach.maxZ} mm`;
+      }
+
+      const speedTag = document.getElementById('machine-speed-tag');
+      if (speedTag) speedTag.textContent = currentLang === 'fr' ? mach.speedLabelFr : mach.speedLabelEn;
+
+      const lblX = document.getElementById('lbl-max-x');
+      if (lblX) lblX.textContent = `DIM X (max ${mach.maxX})`;
+      const lblY = document.getElementById('lbl-max-y');
+      if (lblY) lblY.textContent = `DIM Y (max ${mach.maxY})`;
+      const lblZ = document.getElementById('lbl-max-z');
+      if (lblZ) lblZ.textContent = `DIM Z (max ${mach.maxZ})`;
+
+      const recBadge = document.getElementById('recommended-machine-badge');
+      if (recBadge) recBadge.textContent = `${mach.upperName} (${mach.maxX}×${mach.maxY}×${mach.maxZ})`;
+
+      if (scene) {
+        rebuildChamberEnvelope(mach);
+      }
+      if (partMesh) {
+        updatePartTransformAndMetrics();
+      }
+      recalculateCost();
+    }
+
+    function onViewerResize() {
+      const container = document.getElementById('viewer-canvas-container');
+      if (!container || !renderer || !camera) return;
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      if (w > 0 && h > 0) {
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+      }
+    }
+
+    function animate3D() {
+      requestAnimationFrame(animate3D);
+      if (controls) controls.update();
+      if (renderer && scene && camera) {
+        renderer.render(scene, camera);
+      }
+    }
+
+    function resetCameraView() {
+      if (!camera || !controls) return;
+      const mach = MACHINES_DB[currentMachineKey];
+      const dist = Math.max(mach.maxX, mach.maxY, mach.maxZ * 0.75) * 1.45;
+      camera.position.set(dist, dist * 0.85, dist * 1.1);
+      controls.target.set(0, Math.min(180, mach.maxZ * 0.35), 0);
+      controls.update();
+    }
+
+    function setGeometryToScene(geometry, fileName) {
+      currentFileName = fileName;
+      currentScalePercent = 100;
+      document.getElementById('part-scale-input').value = 100;
+      document.getElementById('loaded-filename').textContent = fileName;
+
+      if (partMesh) {
+        scene.remove(partMesh);
+        partMesh.geometry.dispose();
+        partMesh.material.dispose();
+      }
+      if (bboxHelper) {
+        scene.remove(bboxHelper);
+      }
+
+      geometry.computeVertexNormals();
+      geometry.computeBoundingBox();
+      const center = new THREE.Vector3();
+      geometry.boundingBox.getCenter(center);
+      geometry.translate(-center.x, -center.y, -center.z);
+
+      baseGeometry = geometry;
+
+      const matKey = document.getElementById('param-material').value;
+      const matColor = MATERIALS_DB[matKey] ? MATERIALS_DB[matKey].colorHex : 0x0EA5E9;
+
+      const material = new THREE.MeshStandardMaterial({
+        color: matColor,
+        roughness: 0.38,
+        metalness: 0.18,
+        flatShading: false
+      });
+
+      partMesh = new THREE.Mesh(baseGeometry, material);
+      scene.add(partMesh);
+
+      bboxHelper = new THREE.BoxHelper(partMesh, 0x38BDF8);
+      scene.add(bboxHelper);
+
+      updatePartTransformAndMetrics();
+      recalculateCost();
+    }
+
+    function updatePartTransformAndMetrics() {
+      if (!partMesh) return;
+
+      const mach = MACHINES_DB[currentMachineKey];
+      const s = currentScalePercent / 100;
+      partMesh.scale.set(s, s, s);
+      partMesh.updateMatrixWorld(true);
+
+      const box = new THREE.Box3().setFromObject(partMesh);
+      const size = new THREE.Vector3();
+      box.getSize(size);
+
+      const center = new THREE.Vector3();
+      box.getCenter(center);
+      partMesh.position.x -= center.x;
+      partMesh.position.z -= center.z;
+      partMesh.position.y -= box.min.y;
+      partMesh.updateMatrixWorld(true);
+
+      if (bboxHelper) {
+        bboxHelper.update();
+      }
+
+      const dimX = size.x;
+      const dimY = size.z;
+      const dimZ = size.y;
+
+      const geoStats = computeMeshVolumeAndArea(partMesh.geometry, s);
+
+      const fitsX = dimX <= mach.maxX + 0.05;
+      const fitsY = dimY <= mach.maxY + 0.05;
+      const fitsZ = dimZ <= mach.maxZ + 0.05;
+      const fitsAll = fitsX && fitsY && fitsZ;
+
+      partMetrics = {
+        dimX,
+        dimY,
+        dimZ,
+        volumeCm3: geoStats.volumeCm3,
+        surfaceCm2: geoStats.surfaceCm2,
+        triangles: geoStats.triangles,
+        fitsEnvelope: fitsAll
+      };
+
+      document.getElementById('val-dim-x').textContent = `${dimX.toFixed(1)} mm`;
+      document.getElementById('val-dim-y').textContent = `${dimY.toFixed(1)} mm`;
+      document.getElementById('val-dim-z').textContent = `${dimZ.toFixed(1)} mm`;
+      document.getElementById('val-volume').textContent = `${geoStats.volumeCm3.toFixed(1)} cm³`;
+      document.getElementById('val-surface').textContent = `${geoStats.surfaceCm2.toFixed(1)} cm²`;
+      document.getElementById('triangle-count-badge').textContent = `${geoStats.triangles.toLocaleString()} triangles`;
+
+      styleAxisCard('box-dim-x', 'val-dim-x', fitsX);
+      styleAxisCard('box-dim-y', 'val-dim-y', fitsY);
+      styleAxisCard('box-dim-z', 'val-dim-z', fitsZ);
+
+      const badge = document.getElementById('fit-status-badge');
+      const statusText = document.getElementById('fit-status-text');
+      const alertBox = document.getElementById('oversize-alert');
+      const oversizeTitle = document.getElementById('oversize-title-text');
+
+      if (fitsAll) {
+        badge.className = "inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30";
+        statusText.textContent = currentLang === 'fr'
+          ? `COMPATIBLE ${mach.maxX}×${mach.maxY}×${mach.maxZ} MM`
+          : `FITS ${mach.maxX}×${mach.maxY}×${mach.maxZ} MM`;
+        alertBox.classList.add('hidden');
+        if (bboxHelper) bboxHelper.material.color.setHex(0x38BDF8);
+      } else {
+        badge.className = "inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-bold bg-red-500/25 text-red-200 border border-red-400/40";
+        statusText.textContent = currentLang === 'fr'
+          ? `HORS GABARIT ${mach.upperName}`
+          : `EXCEEDS ${mach.upperName} ENVELOPE`;
+        if (oversizeTitle) {
+          oversizeTitle.textContent = currentLang === 'fr'
+            ? `Attention : La pièce dépasse le volume utile de la ${mach.name} (${mach.maxX} × ${mach.maxY} × ${mach.maxZ} mm).`
+            : `Warning: Part exceeds the ${mach.name} build volume (${mach.maxX} × ${mach.maxY} × ${mach.maxZ} mm).`;
+        }
+        alertBox.classList.remove('hidden');
+        if (bboxHelper) bboxHelper.material.color.setHex(0xEF4444);
+      }
+    }
+
+    function styleAxisCard(cardId, valId, isOk) {
+      const card = document.getElementById(cardId);
+      const val = document.getElementById(valId);
+      if (isOk) {
+        card.className = "rounded-xl bg-afLight border border-slate-200 p-3";
+        val.className = "text-base font-mono font-extrabold text-afNavy mt-0.5 block";
+      } else {
+        card.className = "rounded-xl bg-red-50 border border-red-300 p-3";
+        val.className = "text-base font-mono font-extrabold text-red-600 mt-0.5 block";
+      }
+    }
+
+    function computeMeshVolumeAndArea(geometry, scale) {
+      const pos = geometry.attributes.position;
+      const index = geometry.index;
+      let signedVolume = 0;
+      let surfaceArea = 0;
+
+      const pA = new THREE.Vector3();
+      const pB = new THREE.Vector3();
+      const pC = new THREE.Vector3();
+      const cross = new THREE.Vector3();
+      const e1 = new THREE.Vector3();
+      const e2 = new THREE.Vector3();
+
+      const triCount = index ? index.count / 3 : pos.count / 3;
+
+      for (let i = 0; i < triCount; i++) {
+        const i0 = index ? index.getX(i * 3) : i * 3;
+        const i1 = index ? index.getX(i * 3 + 1) : i * 3 + 1;
+        const i2 = index ? index.getX(i * 3 + 2) : i * 3 + 2;
+
+        pA.fromBufferAttribute(pos, i0);
+        pB.fromBufferAttribute(pos, i1);
+        pC.fromBufferAttribute(pos, i2);
+
+        cross.crossVectors(pB, pC);
+        signedVolume += pA.dot(cross) / 6.0;
+
+        e1.subVectors(pB, pA);
+        e2.subVectors(pC, pA);
+        cross.crossVectors(e1, e2);
+        surfaceArea += 0.5 * cross.length();
+      }
+
+      const scale3 = Math.pow(scale, 3);
+      const scale2 = Math.pow(scale, 2);
+
+      const volumeMm3 = Math.abs(signedVolume) * scale3;
+      const surfaceMm2 = surfaceArea * scale2;
+
+      return {
+        volumeCm3: Math.max(0.1, volumeMm3 / 1000.0),
+        surfaceCm2: Math.max(0.1, surfaceMm2 / 100.0),
+        triangles: Math.round(triCount)
+      };
+    }
+
+    function rotatePartAxis(axis) {
+      if (!partMesh) return;
+      const angle = Math.PI / 2;
+      if (axis === 'x') partMesh.rotation.x += angle;
+      if (axis === 'y') partMesh.rotation.y += angle;
+      if (axis === 'z') partMesh.rotation.z += angle;
+      updatePartTransformAndMetrics();
+      recalculateCost();
+    }
+
+    function layFlatOnBed() {
+      if (!partMesh) return;
+      partMesh.rotation.set(0, 0, 0);
+      updatePartTransformAndMetrics();
+
+      if (partMetrics.dimZ > partMetrics.dimY && partMetrics.dimZ > partMetrics.dimX) {
+        partMesh.rotation.x = Math.PI / 2;
+        updatePartTransformAndMetrics();
+      }
+      recalculateCost();
+      showToast(currentLang === 'fr' ? "Pièce orientée à plat sur le plateau." : "Part laid flat on the build plate.");
+    }
+
+    function updatePartScale(val) {
+      const parsed = parseFloat(val);
+      if (isNaN(parsed) || parsed < 5 || parsed > 1000) return;
+      currentScalePercent = parsed;
+      updatePartTransformAndMetrics();
+      recalculateCost();
+    }
+
+    function fitToBuildVolume() {
+      if (!partMesh || partMetrics.dimX === 0) return;
+      const mach = MACHINES_DB[currentMachineKey];
+      const baseX = partMetrics.dimX / (currentScalePercent / 100);
+      const baseY = partMetrics.dimY / (currentScalePercent / 100);
+      const baseZ = partMetrics.dimZ / (currentScalePercent / 100);
+
+      const ratioX = (mach.maxX - 4) / baseX;
+      const ratioY = (mach.maxY - 4) / baseY;
+      const ratioZ = (mach.maxZ - 4) / baseZ;
+
+      const maxScale = Math.floor(Math.min(ratioX, ratioY, ratioZ) * 100);
+      currentScalePercent = Math.max(5, maxScale);
+      document.getElementById('part-scale-input').value = currentScalePercent;
+      updatePartTransformAndMetrics();
+      recalculateCost();
+      showToast(currentLang === 'fr'
+        ? `Échelle ajustée à ${currentScalePercent}% pour le volume ${mach.name} (${mach.maxX}×${mach.maxY}×${mach.maxZ} mm).`
+        : `Scale adjusted to ${currentScalePercent}% for ${mach.name} (${mach.maxX}×${mach.maxY}×${mach.maxZ} mm).`);
+    }
+
+    function handleCADFileSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      parseCADFile(file);
+    }
+
+    const dropZone = document.getElementById('drop-zone');
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('border-afCyanDark', 'bg-sky-50/70');
+    });
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('border-afCyanDark', 'bg-sky-50/70');
+    });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('border-afCyanDark', 'bg-sky-50/70');
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        parseCADFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    function parseCADFile(file) {
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (ext !== 'stl' && ext !== 'obj') {
+        showToast(currentLang === 'fr'
+          ? "Format non supporté pour l'aperçu 3D direct. Veuillez importer un fichier .STL ou .OBJ."
+          : "Unsupported format for direct 3D preview. Please upload a .STL or .OBJ file.");
+        return;
+      }
+
+      const reader = new FileReader();
+      if (ext === 'stl') {
+        reader.onload = (e) => {
+          try {
+            const geo = parseSTLBuffer(e.target.result);
+            setGeometryToScene(geo, file.name);
+            showToast(currentLang === 'fr'
+              ? `Fichier "${file.name}" chargé et analysé avec succès.`
+              : `File "${file.name}" loaded and analyzed successfully.`);
+          } catch (err) {
+            showToast(currentLang === 'fr' ? "Erreur lors de la lecture du fichier STL." : "Error parsing STL file.");
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      } else if (ext === 'obj') {
+        reader.onload = (e) => {
+          try {
+            const geo = parseOBJText(e.target.result);
+            setGeometryToScene(geo, file.name);
+            showToast(currentLang === 'fr'
+              ? `Fichier "${file.name}" chargé et analysé avec succès.`
+              : `File "${file.name}" loaded and analyzed successfully.`);
+          } catch (err) {
+            showToast(currentLang === 'fr' ? "Erreur lors de la lecture du fichier OBJ." : "Error parsing OBJ file.");
+          }
+        };
+        reader.readAsText(file);
+      }
+    }
+
+    function parseSTLBuffer(buffer) {
+      const dataView = new DataView(buffer);
+      const isBinary = (() => {
+        if (buffer.byteLength < 84) return false;
+        const faceCount = dataView.getUint32(80, true);
+        const expectedSize = 84 + faceCount * 50;
+        if (expectedSize === buffer.byteLength) return true;
+        const headerBytes = new Uint8Array(buffer, 0, 80);
+        const headerText = new TextDecoder().decode(headerBytes);
+        return !headerText.trim().startsWith('solid');
+      })();
+
+      if (isBinary) {
+        const faces = dataView.getUint32(80, true);
+        const vertices = new Float32Array(faces * 9);
+        let offset = 84;
+        for (let i = 0; i < faces; i++) {
+          offset += 12;
+          for (let v = 0; v < 9; v++) {
+            vertices[i * 9 + v] = dataView.getFloat32(offset, true);
+            offset += 4;
+          }
+          offset += 2;
+        }
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+        return geo;
+      } else {
+        const text = new TextDecoder().decode(buffer);
+        const vertexPattern = /vertex\s+([+-]?\d*\.?\d+(?:[eE][+-]?\d+)?)\s+([+-]?\d*\.?\d+(?:[eE][+-]?\d+)?)\s+([+-]?\d*\.?\d+(?:[eE][+-]?\d+)?)/g;
+        const verts = [];
+        let match;
+        while ((match = vertexPattern.exec(text)) !== null) {
+          verts.push(parseFloat(match[1]), parseFloat(match[2]), parseFloat(match[3]));
+        }
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(verts), 3));
+        return geo;
+      }
+    }
+
+    function parseOBJText(text) {
+      const rawVerts = [];
+      const finalVerts = [];
+      const lines = text.split('\n');
+
+      for (let line of lines) {
+        line = line.trim();
+        if (line.startsWith('v ')) {
+          const parts = line.split(/\s+/);
+          rawVerts.push([parseFloat(parts[1]), parseFloat(parts[2]), parseFloat(parts[3])]);
+        } else if (line.startsWith('f ')) {
+          const parts = line.split(/\s+/).slice(1);
+          const faceIdx = parts.map(p => parseInt(p.split('/')[0], 10) - 1);
+          for (let i = 1; i < faceIdx.length - 1; i++) {
+            const v0 = rawVerts[faceIdx[0]];
+            const v1 = rawVerts[faceIdx[i]];
+            const v2 = rawVerts[faceIdx[i + 1]];
+            if (v0 && v1 && v2) {
+              finalVerts.push(...v0, ...v1, ...v2);
+            }
+          }
+        }
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(finalVerts), 3));
+      return geo;
+    }
+
+    function loadPresetPart(type) {
+      let geo;
+      let name;
+
+      if (type === 'bracket') {
+        const shape = new THREE.Shape();
+        shape.moveTo(-75, -35);
+        shape.lineTo(75, -35);
+        shape.lineTo(75, 15);
+        shape.lineTo(25, 65);
+        shape.lineTo(-25, 65);
+        shape.lineTo(-75, 15);
+        shape.closePath();
+
+        const hole1 = new THREE.Path();
+        hole1.absarc(-45, -10, 12, 0, Math.PI * 2, true);
+        shape.holes.push(hole1);
+
+        const hole2 = new THREE.Path();
+        hole2.absarc(45, -10, 12, 0, Math.PI * 2, true);
+        shape.holes.push(hole2);
+
+        const hole3 = new THREE.Path();
+        hole3.absarc(0, 32, 16, 0, Math.PI * 2, true);
+        shape.holes.push(hole3);
+
+        geo = new THREE.ExtrudeGeometry(shape, {
+          depth: 42,
+          bevelEnabled: true,
+          bevelThickness: 3,
+          bevelSize: 2.5,
+          bevelSegments: 2
+        });
+        name = "Support_Aero_DFAM_150x100x48mm.stl";
+        document.getElementById('param-material').value = 'cf_composite';
+      } else if (type === 'housing') {
+        geo = new THREE.CylinderGeometry(85, 92, 140, 36);
+        name = "Boitier_Capteur_Auto_184x184x140mm.stl";
+        document.getElementById('param-material').value = 'abs_asa';
+      } else {
+        const shape = new THREE.Shape();
+        shape.moveTo(-38, -125);
+        shape.bezierCurveTo(-45, -60, -52, 20, -44, 95);
+        shape.bezierCurveTo(-36, 130, 15, 135, 38, 105);
+        shape.bezierCurveTo(52, 70, 36, -15, 34, -85);
+        shape.bezierCurveTo(32, -125, -15, -135, -38, -125);
+
+        geo = new THREE.ExtrudeGeometry(shape, {
+          depth: 16,
+          bevelEnabled: true,
+          bevelThickness: 2.5,
+          bevelSize: 2.5,
+          bevelSegments: 3
+        });
+        geo.rotateX(-Math.PI / 2);
+        name = "Semelle_Orthopedique_T42_SurMesure.stl";
+        document.getElementById('param-material').value = 'tpu';
+      }
+
+      setGeometryToScene(geo, name);
+    }
+
+    function updateInfillLabel(val) {
+      document.getElementById('infill-val-display').textContent = `${val}%`;
+    }
+
+    function adjustQty(delta) {
+      const input = document.getElementById('param-qty');
+      let current = parseInt(input.value, 10) || 1;
+      current = Math.max(1, Math.min(1000, current + delta));
+      input.value = current;
+      recalculateCost();
+    }
+
+    function recalculateCost() {
+      const mach = MACHINES_DB[currentMachineKey];
+      const matKey = document.getElementById('param-material').value;
+      const mat = MATERIALS_DB[matKey];
+
+      if (partMesh && partMesh.material) {
+        partMesh.material.color.setHex(mat.colorHex);
+      }
+
+      document.getElementById('material-density-tag').textContent = `${mat.density.toFixed(2)} g/cm³`;
+      document.getElementById('material-tech-note').textContent = currentLang === 'fr' ? mat.noteFr : mat.noteEn;
+
+      const matWarnBox = document.getElementById('machine-mat-warning');
+      const matWarnText = document.getElementById('machine-mat-warning-text');
+      const needsEnclosure = ['abs_asa', 'pc', 'nylon', 'cf_composite'].includes(matKey);
+      const isResinMat = matKey === 'resin';
+
+      if (matWarnBox && matWarnText) {
+        if (isResinMat && !mach.supportsResin) {
+          matWarnBox.classList.remove('hidden');
+          matWarnText.textContent = currentLang === 'fr'
+            ? `Note : Les résines techniques HD sont traitées sur la station SLA/Résine haute précision d'AF3D (non extrudées sur ${mach.name}).`
+            : `Note: HD engineering resins are processed on AF3D's high-precision SLA/Resin station (not extruded on ${mach.name}).`;
+        } else if (needsEnclosure && !mach.enclosed) {
+          matWarnBox.classList.remove('hidden');
+          matWarnText.textContent = currentLang === 'fr'
+            ? `Recommandation : Le matériau ${mat.nameFr} nécessite une enceinte fermée pour éviter le gauchissement (warping). Basculez vers Creality K2 Plus, Elegoo Centauri Carbon 2 ou Epitum JL.`
+            : `Recommendation: ${mat.nameEn} requires an enclosed heated chamber to prevent warping. Switch to Creality K2 Plus, Elegoo Centauri Carbon 2, or Epitum JL.`;
+        } else {
+          matWarnBox.classList.add('hidden');
+        }
+      }
+
+      const infillPct = parseFloat(document.getElementById('param-infill').value) / 100;
+      const pattern = document.getElementById('param-pattern').value;
+      const layerHeight = parseFloat(document.getElementById('param-layer').value);
+      const walls = parseInt(document.getElementById('param-walls').value, 10);
+      const supports = document.getElementById('param-supports').value;
+      const finish = document.getElementById('param-finish').value;
+      const qty = Math.max(1, parseInt(document.getElementById('param-qty').value, 10) || 1);
+      const urgency = document.getElementById('param-urgency').value;
+
+      const netVolCm3 = partMetrics.volumeCm3 || 10;
+      const surfCm2 = partMetrics.surfaceCm2 || 40;
+
+      const shellThicknessCm = walls * 0.04;
+      const estimatedShellVol = Math.min(netVolCm3 * 0.88, surfCm2 * shellThicknessCm);
+      const interiorVol = Math.max(0, netVolCm3 - estimatedShellVol);
+      const patternMult = pattern === 'gyroid' ? 1.06 : (pattern === 'honeycomb' ? 1.08 : 1.0);
+      const effectivePartVolCm3 = estimatedShellVol + interiorVol * infillPct * patternMult;
+
+      const supportFactor = supports === 'none' ? 0.0 : (supports === 'auto' ? 0.14 : 0.28);
+      const totalUsedVolCm3 = effectivePartVolCm3 * (1 + supportFactor);
+
+      const partWeightGrams = totalUsedVolCm3 * mat.density;
+
+      const layerFactor = 0.20 / layerHeight;
+      const baseFlowRateCm3PerHour = 13.5 * mat.speedMultiplier * mach.speedFactor;
+      const printHoursPerPart = 0.22 + (totalUsedVolCm3 / baseFlowRateCm3PerHour) * Math.pow(layerFactor, 0.72);
+
+      const rawMatCost = partWeightGrams * mat.pricePerGram;
+      const rawMachCost = printHoursPerPart * mach.hourlyRate;
+
+      const finishCostPerPart = {
+        raw: 8,
+        sanding: 35,
+        annealing: 45,
+        vapor: 60
+      }[finish] || 8;
+
+      const setupBase = mach.setupFee;
+      const setupPerPart = (setupBase / qty) + finishCostPerPart;
+
+      let unitSubtotal = rawMatCost + rawMachCost + setupPerPart;
+
+      if (urgency === 'express') {
+        unitSubtotal *= 1.25;
+      }
+
+      let discountRate = 0;
+      if (qty >= 50) discountRate = 0.22;
+      else if (qty >= 20) discountRate = 0.15;
+      else if (qty >= 10) discountRate = 0.10;
+      else if (qty >= 5) discountRate = 0.05;
+
+      const subtotalAll = unitSubtotal * qty;
+      const discountAmount = subtotalAll * discountRate;
+      const totalHT = Math.max(45, subtotalAll - discountAmount);
+      const unitHT = totalHT / qty;
+      const totalTTC = totalHT * 1.20;
+
+      const hoursWhole = Math.floor(printHoursPerPart);
+      const minsWhole = Math.round((printHoursPerPart - hoursWhole) * 60);
+
+      document.getElementById('res-weight').textContent = `${partWeightGrams.toFixed(1)} g`;
+      document.getElementById('res-time').textContent = `${hoursWhole}h ${minsWhole.toString().padStart(2, '0')}m`;
+
+      document.getElementById('res-cost-mat').textContent = `${(rawMatCost * qty).toFixed(2)} MAD`;
+      document.getElementById('res-cost-mach').textContent = `${(rawMachCost * qty).toFixed(2)} MAD`;
+      document.getElementById('res-cost-setup').textContent = `${(setupPerPart * qty).toFixed(2)} MAD`;
+
+      const discountRow = document.getElementById('discount-row');
+      const discountBadge = document.getElementById('qty-discount-badge');
+      if (discountRate > 0) {
+        discountRow.classList.remove('hidden');
+        document.getElementById('res-discount').textContent = `-${discountAmount.toFixed(2)} MAD (${Math.round(discountRate * 100)}%)`;
+        discountBadge.textContent = currentLang === 'fr'
+          ? `Remise série -${Math.round(discountRate * 100)}% appliquée`
+          : `Batch discount -${Math.round(discountRate * 100)}% applied`;
+      } else {
+        discountRow.classList.add('hidden');
+        discountBadge.textContent = currentLang === 'fr' ? "Remise dès 5 pièces" : "Discount from 5 pcs";
+      }
+
+      document.getElementById('res-unit-price').textContent = `${unitHT.toFixed(2)} MAD`;
+      document.getElementById('res-total-price').textContent = `${totalHT.toFixed(2)} MAD`;
+      document.getElementById('res-total-ttc').textContent = `${totalTTC.toFixed(2)} MAD`;
+
+      lastCalculation = {
+        fileName: currentFileName,
+        machineName: `${mach.name} (${mach.maxX}×${mach.maxY}×${mach.maxZ} mm)`,
+        dims: `${partMetrics.dimX.toFixed(1)} × ${partMetrics.dimY.toFixed(1)} × ${partMetrics.dimZ.toFixed(1)} mm`,
+        volume: `${partMetrics.volumeCm3.toFixed(1)} cm³`,
+        material: currentLang === 'fr' ? mat.nameFr : mat.nameEn,
+        infill: `${Math.round(infillPct * 100)}% (${pattern})`,
+        layer: `${layerHeight.toFixed(2)} mm`,
+        walls: `${walls}`,
+        supports,
+        finish,
+        qty,
+        urgency,
+        weight: `${partWeightGrams.toFixed(1)} g`,
+        time: `${hoursWhole}h ${minsWhole.toString().padStart(2, '0')}m`,
+        totalHT: `${totalHT.toFixed(2)} MAD`
+      };
+    }
+
+    function openSimulatorQuoteModal() {
+      const modal = document.getElementById('sim-quote-modal');
+      const summaryEl = document.getElementById('modal-tech-summary');
+      summaryEl.innerHTML = `
+        <strong>Fichier :</strong> ${lastCalculation.fileName} | <strong>Machine :</strong> ${lastCalculation.machineName}<br/>
+        <strong>Dimensions :</strong> ${lastCalculation.dims} | <strong>Volume :</strong> ${lastCalculation.volume}<br/>
+        <strong>Matériau :</strong> ${lastCalculation.material} | <strong>Remplissage :</strong> ${lastCalculation.infill} | <strong>Couche :</strong> ${lastCalculation.layer}<br/>
+        <strong>Quantité :</strong> ${lastCalculation.qty} pcs | <strong>Estimation :</strong> <span class="text-afCyanDark font-bold">${lastCalculation.totalHT} HT</span>
+      `;
+      document.getElementById('sim-quote-form').classList.remove('hidden');
+      document.getElementById('sim-quote-success').classList.add('hidden');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeSimulatorQuoteModal() {
+      const modal = document.getElementById('sim-quote-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function submitSimulatorQuote(e) {
+      e.preventDefault();
+      document.getElementById('sim-quote-form').classList.add('hidden');
+      document.getElementById('sim-quote-success').classList.remove('hidden');
+    }
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      document.documentElement.lang = lang;
+
+      const btnFr = document.getElementById('btn-lang-fr');
+      const btnEn = document.getElementById('btn-lang-en');
+      if (lang === 'fr') {
+        btnFr.className = "px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all bg-afNavy text-white shadow-sm cursor-pointer";
+        btnEn.className = "px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all text-slate-600 hover:text-afNavy cursor-pointer";
+      } else {
+        btnEn.className = "px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all bg-afNavy text-white shadow-sm cursor-pointer";
+        btnFr.className = "px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all text-slate-600 hover:text-afNavy cursor-pointer";
+      }
+
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (i18n[lang] && i18n[lang][key]) {
+          el.textContent = i18n[lang][key];
+        }
+      });
+
+      selectMachine(currentMachineKey);
+      updatePartTransformAndMetrics();
+      recalculateCost();
+    }
+
+    function toggleMobileMenu() {
+      const menu = document.getElementById('mobile-menu');
+      const openIcon = document.getElementById('menu-icon-open');
+      const closeIcon = document.getElementById('menu-icon-close');
+      menu.classList.toggle('hidden');
+      openIcon.classList.toggle('hidden');
+      closeIcon.classList.toggle('hidden');
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('sim-toast');
+      document.getElementById('sim-toast-msg').textContent = message;
+      toast.classList.remove('hidden');
+    }
+
+    function hideToast() {
+      document.getElementById('sim-toast').classList.add('hidden');
+    }
+
+    window.onload = function () {
+      init3DViewer();
+      selectMachine('epitum_jl');
+      loadPresetPart('bracket');
+      setLanguage('fr');
+    };
+  </script>
+</body>
+</html>
